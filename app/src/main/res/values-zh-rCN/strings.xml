@@ -1,0 +1,197 @@
+<resources>
+    <string name="app_name">ThemeStoreX</string>
+    <string name="title_home">首页</string>
+    <string name="title_settings">设置</string>
+    <string name="home_install_title">主题安装</string>
+    <string name="home_install_summary">安装本地/在线主题包</string>
+    <string name="language_label">语言</string>
+    <string name="lang_zh_cn">简体中文</string>
+    <string name="lang_zh_tw">繁體中文</string>
+    <string name="lang_en">English</string>
+    <string name="color_mode">颜色模式</string>
+    <string name="color_system">跟随系统</string>
+    <string name="color_light">浅色</string>
+    <string name="color_dark">深色</string>
+    <string name="tab_local">本地</string>
+    <string name="tab_online">在线</string>
+    <string name="local_install_desc">从设备存储中选择主题文件进行安装</string>
+    <string name="select_theme_file">选择主题文件</string>
+    <string name="online_install_desc">输入主题下载链接，自动下载并安装</string>
+    <string name="theme_url_label">主题下载链接</string>
+    <string name="download_install">下载并安装</string>
+    <string name="welcome_title">欢迎使用</string>
+    <string name="privacy_title">隐私政策</string>
+    <string name="privacy_accept">同意</string>
+    <string name="privacy_reject">拒绝</string>
+    <string name="setup_complete">设置完成</string>
+    <string name="enter_app">进入软件</string>
+    <string name="privacy_content">欢迎使用本应用（以下简称"本App"）。我们重视您的个人信息保护，请您阅读以下内容，了解我们如何收集和使用信息：\n\n【1. 收集的信息】\n- 设备信息（如型号、系统版本等）\n- 使用数据（如启动次数、崩溃信息等）\n\n【2. 信息用途】\n- 用于优化产品与服务体验\n- 进行数据分析和故障排查\n- 遵守相关法律法规\n\n【3. 信息保护】\n我们会采取合理措施保障信息安全，防止泄露、丢失或非法访问。\n\n【4. 您的权利】\n- 有权选择是否同意本政策\n- 可随时停止使用本App\n- 如有疑问，可随时联系我们\n\n【5. 政策更新】\n我们可能适时更新隐私政策，变更内容将在App中通知。</string>
+    <string name="welcome_language_title">语言设置</string>
+    <string name="welcome_language_desc">请选择您偏好的语言</string>
+    <string name="permission_title">权限请求</string>
+    <string name="permission_desc">为了更好地使用本应用，请授予以下权限</string>
+    <string name="permission_storage_title">文件管理权限</string>
+    <string name="permission_storage_desc">用于存储和读取主题文件</string>
+    <string name="permission_accessibility_title">无障碍权限</string>
+    <string name="permission_accessibility_desc">用于自动安装主题</string>
+    <string name="permission_notification_title">通知权限</string>
+    <string name="permission_notification_desc">用于发送安装进度通知</string>
+    <string name="permission_already_granted">权限已授予</string>
+    <string name="next_step">下一步</string>
+    <string name="skip">跳过</string>
+    <string name="copying_theme">正在复制主题…</string>
+    <string name="theme_copied">主题文件已复制</string>
+    <string name="copy_failed">复制失败</string>
+    <string name="download_started">开始下载主题…</string>
+    <string name="download_complete">下载完成</string>
+    <string name="download_failed">下载失败</string>
+    <string name="input_url_hint">请输入主题下载链接</string>
+    <string name="theme_manager_not_found">启动主题管理器失败</string>
+    <string name="empty_folder">此文件夹为空</string>
+    <string name="confirm">确定</string>
+    <string name="cancel">取消</string>
+
+    <!-- 无障碍服务 -->
+    <string name="accessibility_service_label">ThemeStore</string>
+    <string name="accessibility_service_description">依托无障碍服务动态注册广播接收器（优先级 1000），优先接收 MIUI 闹钟广播和系统灭屏广播。注意：普通广播仅能优先接收，无法阻断传递。运行在独立进程中。</string>
+
+    <string name="home_accessibility_title">无障碍服务</string>
+    <string name="home_accessibility_enabled_summary">已开启，可自动拦截定时广播</string>
+    <string name="home_accessibility_disabled_summary">未开启，点击前往系统无障碍设置</string>
+    <string name="home_accessibility_status_on">已连接</string>
+    <string name="home_accessibility_status_off">未连接</string>
+
+    <!-- 日志功能 -->
+    <string name="home_tools_title">工具</string>
+    <string name="log_title">日志与统计</string>
+    <string name="log_summary">查看主题安装和闹钟拦截日志</string>
+    <string name="log_statistics_title">统计信息</string>
+    <string name="log_list_title">日志列表</string>
+    <string name="log_empty">暂无日志记录</string>
+    <string name="log_clear_confirm_title">确认清空</string>
+    <string name="log_clear_confirm_message">确定要清空所有日志和统计数据吗？此操作不可恢复。</string>
+    <string name="log_stat_theme_install">主题安装次数</string>
+    <string name="log_stat_alarm_intercept">闹钟监听次数</string>
+    <string name="log_stat_log_size">日志大小</string>
+    <string name="log_stat_times">次</string>
+    <string name="log_stat_never">从未</string>
+    <string name="log_stat_entries">条</string>
+    <string name="alarm_intercept_title">MIUI 定时广播已拦截</string>
+    <string name="alarm_intercept_content">操作行为: %1$s\n触发时间: %2$s</string>
+
+    <!-- Service -->
+    <string name="receive_time_st">接收时间:</string>
+    <string name="action_stop">停止服务</string>
+
+    <!-- LogManager -->
+    <string name="log_stats_title">统计信息</string>
+    <string name="log_file_not_found">日志文件不存在</string>
+    <string name="log_alarm_intercepted">MIUI 定时广播已拦截</string>
+    <string name="log_broadcast_action">广播 Action:</string>
+    <string name="log_intercept_status">拦截状态:</string>
+    <string name="log_status_success">成功</string>
+    <string name="log_theme_install_success">主题安装成功</string>
+    <string name="log_theme_install_failed">主题安装失败</string>
+    <string name="log_file">文件:</string>
+    <string name="log_size">大小:</string>
+
+    <!-- LogPage -->
+    <string name="log_statistics_card_title">运行统计</string>
+    <string name="log_total_count">日志总数: %1$d 条</string>
+    <string name="log_file_size_label">日志大小</string>
+    <string name="log_label_theme_install">主题安装</string>
+    <string name="log_label_alarm_intercept">广播拦截</string>
+    <string name="log_detail_file_size">文件大小</string>
+    <string name="log_detail_size">大小</string>
+    <string name="log_count_unit">次</string>
+
+    <!-- About -->
+    <string name="about_title">关于</string>
+    <string name="about_version_label">版本</string>
+    <string name="about_build_time_label">编译时间</string>
+    <string name="about_contributors">开发者</string>
+    <string name="about_developer">开发者</string>
+    <string name="about_developer_avatar">开发者头像</string>
+    <string name="about_feedback">反馈交流</string>
+    <string name="about_feedback_desc">加入QQ群反馈问题</string>
+    <string name="about_support">支持开发</string>
+    <string name="about_sponsor">赞助作者</string>
+    <string name="about_sponsor_summary">点这里看看</string>
+    <string name="about_sponsor_toast">不用给我赞助了，请自己吃一顿好吃的吧</string>
+    <string name="about_others">其他</string>
+    <string name="about_github">GitHub</string>
+    <string name="about_github_desc">查看项目源代码</string>
+    <string name="about_qq_not_installed">请安装QQ或更新QQ版本</string>
+    <string name="about_open_bilibili_failed">无法打开B站</string>
+    <string name="about_open_failed">打开失败</string>
+    <string name="back">返回</string>
+
+    <!-- 常驻通知保活 -->
+    <string name="keep_alive_title">常驻通知保活</string>
+    <string name="keep_alive_summary">防止无障碍权限被关闭（优先保活子进程）</string>
+    <string name="keep_alive_channel_name">保活通知</string>
+    <string name="keep_alive_channel_desc">保持应用和无障碍服务运行，防止被系统清理</string>
+    <string name="keep_alive_notification_title">ThemeStore 运行中</string>
+    <string name="keep_alive_notification_content">安装:%1$d次 | 拦截:%2$d次</string>
+    <string name="keep_alive_notification_permission_required">请先授予通知权限才能开启常驻通知保活</string>
+
+    <!-- 优化模式 -->
+    <string name="optimization_mode_title">优化模式</string>
+    <string name="optimization_mode_summary">仅保活后台服务，节省内存和CPU（需要无障碍权限）</string>
+    <string name="optimization_mode_dialog_title">开启优化模式</string>
+    <string name="optimization_mode_dialog_message">开启后将自动关闭APP界面，仅保留后台服务运行。\n\n优点：\n• 节省 200–300MB 内存\n• 降低 CPU 占用\n• 核心功能不受影响\n\n如需重新打开APP或关闭优化模式，请点击通知栏中的按钮。\n\n确定开启吗？</string>
+    <string name="optimization_mode_notification_action">退出优化</string>
+    <string name="optimization_mode_enabled_toast">优化模式已启用，APP 将在 2 秒后自动退出</string>
+    <string name="optimization_mode_disabled_toast">优化模式已关闭</string>
+    <string name="optimization_mode_require_accessibility">优化模式需要先开启无障碍权限</string>
+
+    <string name="permission_shizuku_title">Shizuku 授权</string>
+    <string name="permission_shizuku_desc">用于执行无需 Root 的高级系统操作</string>
+    <string name="shizuku_activated">已激活</string>
+    <string name="shizuku_authorize">点击授权</string>
+    <string name="shizuku_not_available">Shizuku 不可用</string>
+    <string name="shizuku_not_running">Shizuku 未运行，请先启动服务</string>
+    <string name="shizuku_not_installed">未安装 Shizuku，请先下载</string>
+
+    <string name="home_status_title">运行状态</string>
+    <string name="status_on">已开启</string>
+    <string name="status_off">未开启</string>
+    <string name="shizuku_not_authorized">未授权</string>
+    <string name="shizuku_running">运行正常</string>
+
+    <string name="close">关闭</string>
+    <string name="copy">复制</string>
+    <string name="personalization">个性化</string>
+    <string name="theme_settings">主题设置</string>
+    <string name="theme_settings_desc">更改应用主题</string>
+    <string name="theme_settings_miuix_custom_colors">自定义颜色</string>
+    <string name="theme_settings_miuix_custom_colors_desc">在 Miuix 主题风格下自定义主题颜色</string>
+    <string name="theme_settings_theme_mode">主题模式</string>
+    <string name="theme_settings_theme_mode_desc">选择主题模式</string>
+    <string name="theme_settings_theme_mode_light">浅色主题</string>
+    <string name="theme_settings_theme_mode_dark">深色主题</string>
+    <string name="theme_settings_theme_mode_system">跟随系统主题</string>
+    <string name="theme_settings_palette_style">调色板样式</string>
+    <string name="theme_settings_palette_style_desc">选择调色板样式</string>
+    <string name="theme_settings_dynamic_color">动态颜色</string>
+    <string name="theme_settings_dynamic_color_desc">基于壁纸的主题颜色</string>
+    <string name="theme_settings_theme_color">主题颜色</string>
+    <string name="color_default">默认</string>
+    <string name="color_pink">粉红色</string>
+    <string name="color_red">红色</string>
+    <string name="color_orange">橙色</string>
+    <string name="color_amber">琥珀色</string>
+    <string name="color_yellow">黄色</string>
+    <string name="color_lime">酸橙色</string>
+    <string name="color_green">绿色</string>
+    <string name="color_cyan">青色</string>
+    <string name="color_teal">蓝绿色</string>
+    <string name="color_light_blue">浅蓝色</string>
+    <string name="color_blue">蓝色</string>
+    <string name="color_indigo">靛蓝色</string>
+    <string name="color_purple">紫色</string>
+    <string name="color_deep_purple">深紫色</string>
+    <string name="color_blue_grey">蓝灰色</string>
+    <string name="color_brown">棕色</string>
+    <string name="color_grey">灰色</string>
+</resources>

@@ -1,29 +1,29 @@
 # ThemeStore
 
-**ThemeStore** 是一款专为小米设备打造的主题安装软件，致力于简化主题的下载与安装流程。项目采用 **Kotlin 100%** 编写，构建工具为 **Gradle 8.13**。
+**ThemeStoreX** 是 **ThemeStore** 的 fork 版本，致力于优化原项目混乱的 UI 和代码架构，同时也用于测试新的项目架构，个人学习用。
 
 ---
 
 ## 项目简介
 
-ThemeStore 主要面向 Android 11-15（a16 目前未兼容），为小米设备用户提供便捷的主题安装体验。
+ThemeStoreX 仅支持 Android 16（我只有安卓16的小米设备）。
 
 ---
 
 ## 主要功能清单
 
-- [x] 安装主题  
-- [x] 网络安装主题  
-- [x] 日志统计  
-- [x] 拦截广播  
-- [x] 常驻通知栏保护（已完成未测试）
-- [x] 优化模式（较为极端，不建议使用）
-- [ ] 多主题配置管理（暂未支持）  
-- [ ] 支持 Shizuku（暂未支持）  
-- [ ] Native Development Kit 定期保活（暂未支持）  
-- [ ] 广播剩余时间计算（暂未支持）  
-- [ ] 官方主题解析（暂未支持）  
-- [ ] 三方主题商店（暂未支持）  
+- [x] 安装主题
+- [x] 网络安装主题
+- [x] 日志统计
+- [x] 拦截广播
+- [x] 常驻通知栏保活
+- [ ] 优化模式（暂时无效）
+- [x] 主题混搭
+- [x] 支持 Shizuku
+- [ ] ~Native Development Kit 定期保活（暂未支持）~
+- [ ] ~广播剩余时间计算（暂未支持）~
+- [ ] ~官方主题解析（暂未支持）~
+- [ ] ~三方主题商店（暂未支持）~
 
 ---
 
@@ -35,8 +35,7 @@ ThemeStore 利用 `\u200b`（零宽空格 Unicode 字符）构造文件别名，
 
 ## 适用安卓版本
 
-- 支持：Android 11 - Android 15
-- 不支持：Android 16 及以上（大概率无法使用安装）
+- 支持：Android 16
 
 ---
 
@@ -72,10 +71,16 @@ ThemeStore 利用 `\u200b`（零宽空格 Unicode 字符）构造文件别名，
 
 ---
 
-## 作者
+## 致谢
+
+### 原项目
+
+[GitHub - MerakXingChen/ThemeStore](https://github.com/MerakXingChen/ThemeStore)
+
+### 原作者
 
 [bilibili - MerakXingChen](https://space.bilibili.com/1064893426)
 
-## 项目主页
+### 图标
 
-[GitHub - MerakXingChen/ThemeStore](https://github.com/MerakXingChen/ThemeStore)
+[Microsoft FluentUI Emoji](https://github.com/microsoft/fluentui-emoji)

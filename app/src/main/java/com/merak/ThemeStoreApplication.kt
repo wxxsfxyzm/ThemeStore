@@ -1,16 +1,29 @@
 package com.merak
 
 import android.app.Application
-import com.merak.state.AppSettingsState
-import com.merak.utils.PreferenceUtil
+import com.merak.di.init.appModules
+import com.merak.util.CrashHandler
+import com.merak.x.BuildConfig
+import org.koin.android.ext.koin.androidContext
+import org.koin.android.ext.koin.androidLogger
+import org.koin.core.context.startKoin
+import org.lsposed.hiddenapibypass.HiddenApiBypass
+import timber.log.Timber
 
 class ThemeStoreApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        PreferenceUtil.init(this)
-        // 加载保存的设置
-        AppSettingsState.language.intValue = PreferenceUtil.getInt("app_language", 0)
-        AppSettingsState.colorMode.intValue = PreferenceUtil.getInt("color_mode", 0)
+        HiddenApiBypass.addHiddenApiExemptions("")
+        if (BuildConfig.DEBUG) Timber.plant(Timber.DebugTree())
+        CrashHandler.instance.init()
+        startKoin {
+            // Koin Android Logger
+            androidLogger()
+            // Koin Android Context
+            androidContext(this@ThemeStoreApplication)
+            // use modules
+            modules(appModules)
+        }
     }
 }
 

@@ -9,85 +9,84 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.os.Build
+import android.content.pm.ServiceInfo
 import android.os.IBinder
-import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import com.merak.MainActivity
-import com.merak.R
-import com.merak.utils.LogManager
-import com.merak.utils.PreferenceUtil
+import com.merak.core.os.shizuku.PrivilegedManager
+import com.merak.data.settings.model.AppSettings
+import com.merak.data.settings.repo.SettingsRepo
+import com.merak.ui.activity.MainActivity
+import com.merak.util.timber.LogFormatter
+import com.merak.x.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+import timber.log.Timber
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
-/**
- * 专门负责展示常驻保活通知的前台服务
- */
-class KeepAliveService : Service() {
+class KeepAliveService : Service(), KoinComponent {
+
+    private val settingsRepo: SettingsRepo by inject()
+    private val privilegedManager: PrivilegedManager by inject()
 
     companion object {
-        private const val TAG = "KeepAliveService"
         private const val CHANNEL_ID = "keep_alive_channel"
         private const val NOTIFICATION_ID = 1001
         private const val ACTION_START = "com.merak.service.KeepAliveService.START"
         private const val ACTION_STOP = "com.merak.service.KeepAliveService.STOP"
         private const val ACTION_REFRESH = "com.merak.service.KeepAliveService.REFRESH"
-        private const val EXTRA_OPTIMIZATION_STATE = "extra_optimization_state"
-        private const val EXTRA_KEEP_ALIVE_STATE = "extra_keep_alive_state"
+        private const val TAG = "KeepAliveService"
 
-        fun start(context: Context, keepAliveState: Boolean? = null, optimizationState: Boolean? = null) {
-            val appContext = context.applicationContext
-            val shouldRun = keepAliveState
-                ?: PreferenceUtil.getBoolean("keep_alive_enabled", false)
+        private val _isRunning = MutableStateFlow(false)
+        val isRunning = _isRunning.asStateFlow()
 
-            if (!shouldRun) {
-                stop(appContext)
-                return
+        // 核心修复1：直接向 ActivityManager 查询真实运行状态，解决冷启动静态变量丢失问题
+        @Suppress("DEPRECATION")
+        fun isRunning(context: Context): Boolean {
+            val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+            // getRunningServices 在 Android 8.0 以后只能获取本应用的服务，完美符合我们的需求
+            for (service in manager.getRunningServices(Int.MAX_VALUE)) {
+                if (KeepAliveService::class.java.name == service.service.className) {
+                    _isRunning.value = true // 同步修正内存状态
+                    return true
+                }
             }
+            _isRunning.value = false
+            return false
+        }
 
-            val intent = Intent(appContext, KeepAliveService::class.java).apply {
+        fun start(context: Context) {
+            val intent = Intent(context, KeepAliveService::class.java).apply {
                 action = ACTION_START
-                keepAliveState?.let { putExtra(EXTRA_KEEP_ALIVE_STATE, it) }
-                optimizationState?.let { putExtra(EXTRA_OPTIMIZATION_STATE, it) }
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                ContextCompat.startForegroundService(appContext, intent)
-            } else {
-                appContext.startService(intent)
-            }
+            ContextCompat.startForegroundService(context, intent)
         }
 
         fun stop(context: Context) {
-            val appContext = context.applicationContext
-            appContext.stopService(Intent(appContext, KeepAliveService::class.java))
+            val intent = Intent(context, KeepAliveService::class.java).apply {
+                action = ACTION_STOP
+            }
+            context.startService(intent)
         }
 
-        fun requestRefresh(context: Context, keepAliveState: Boolean? = null, optimizationState: Boolean? = null) {
-            val appContext = context.applicationContext
-            val shouldRun = keepAliveState
-                ?: PreferenceUtil.getBoolean("keep_alive_enabled", false)
-
-            if (!shouldRun) {
-                stop(appContext)
-                return
-            }
-
-            val intent = Intent(appContext, KeepAliveService::class.java).apply {
+        fun requestRefresh(context: Context) {
+            val intent = Intent(context, KeepAliveService::class.java).apply {
                 action = ACTION_REFRESH
-                keepAliveState?.let { putExtra(EXTRA_KEEP_ALIVE_STATE, it) }
-                optimizationState?.let { putExtra(EXTRA_OPTIMIZATION_STATE, it) }
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                ContextCompat.startForegroundService(appContext, intent)
-            } else {
-                appContext.startService(intent)
-            }
+            ContextCompat.startForegroundService(context, intent)
         }
     }
 
@@ -96,132 +95,200 @@ class KeepAliveService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        Log.d(TAG, "onCreate")
+        _isRunning.value = true
+        Timber.tag(TAG).d("Service lifecycle | onCreate - Service created")
+
+        createNotificationChannelIfNeeded()
+
+        serviceScope.launch {
+            settingsRepo.appSettings.collectLatest { settings ->
+                if (settings.isKeepAliveEnabled && isForeground) {
+                    try {
+                        updateRealNotification(settings)
+                    } catch (e: Exception) {
+                        Timber.tag(TAG).e(e, "Error in collectLatest update")
+                    }
+                }
+            }
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val keepAliveOverride = intent?.extras?.let { extras ->
-            if (extras.containsKey(EXTRA_KEEP_ALIVE_STATE)) extras.getBoolean(EXTRA_KEEP_ALIVE_STATE) else null
+        val action = intent?.action ?: ACTION_START
+        val commandName = when (action) {
+            ACTION_START -> "START"
+            ACTION_STOP -> "STOP"
+            ACTION_REFRESH -> "REFRESH"
+            else -> "UNKNOWN"
         }
-        val optimizationOverride = intent?.extras?.let { extras ->
-            if (extras.containsKey(EXTRA_OPTIMIZATION_STATE)) extras.getBoolean(EXTRA_OPTIMIZATION_STATE) else null
+        Timber.tag(TAG).d("Received command | $commandName")
+
+        if (action == ACTION_STOP) {
+            _isRunning.value = false
+            serviceScope.launch {
+                withContext(Dispatchers.IO) {
+                    try {
+                        privilegedManager.setAccessibilityServiceState(enabled = false)
+                        Timber.tag(TAG).i("Action STOP | Requested to disable accessibility service")
+                    } catch (e: Exception) {
+                        Timber.tag(TAG).e(e, "Action STOP | Failed to disable accessibility service")
+                    }
+                }
+                stopServiceSafe()
+            }
+            return START_NOT_STICKY
         }
 
-        keepAliveOverride?.let {
-            PreferenceUtil.setBoolean("keep_alive_enabled", it)
-        }
-        optimizationOverride?.let {
-            PreferenceUtil.setBoolean("optimization_mode_enabled", it)
+        _isRunning.value = true
+        startForegroundPlaceholder()
+
+        serviceScope.launch {
+            try {
+                val settings = settingsRepo.appSettings.first()
+
+                // 核心修复2：防穿透。不管是启动、刷新，还是被定时器拉起，只要开关没开，格杀勿论！
+                if (!settings.isKeepAliveEnabled) {
+                    Timber.tag(TAG).i("Action $commandName | Config is disabled. Committing suicide.")
+                    stopServiceSafe()
+                    return@launch
+                }
+
+                updateRealNotification(settings)
+
+            } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Error processing $commandName command")
+            }
         }
 
-        when (intent?.action) {
-            ACTION_STOP -> {
-                Log.d(TAG, "ACTION_STOP")
-                serviceScope.launch {
-                    stopForegroundService()
-                }
-            }
-            ACTION_REFRESH -> {
-                Log.d(TAG, "ACTION_REFRESH")
-                serviceScope.launch {
-                    updateNotification()
-                }
-            }
-            else -> {
-                Log.d(TAG, "ACTION_START")
-                serviceScope.launch {
-                    updateNotification()
-                }
-            }
-        }
         return START_STICKY
     }
 
-    override fun onDestroy() {
-        Log.d(TAG, "onDestroy")
-        serviceScope.cancel()
-        if (isForeground) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                stopForeground(STOP_FOREGROUND_REMOVE)
-            } else {
-                @Suppress("DEPRECATION")
-                stopForeground(true)
-            }
-            isForeground = false
+    // 核心修复3：利用 AlarmManager 实现划卡不死（防杀拉起）
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        Timber.tag(TAG).w("Service lifecycle | onTaskRemoved - App swiped from recents")
+
+        // 定时闹钟：1秒后唤醒自己
+        val restartIntent = Intent(applicationContext, KeepAliveService::class.java).apply {
+            action = ACTION_START
         }
+        val pendingIntent = PendingIntent.getService(
+            this,
+            1,
+            restartIntent,
+            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+        alarmManager.set(
+            android.app.AlarmManager.RTC_WAKEUP,
+            System.currentTimeMillis() + 1000,
+            pendingIntent
+        )
+    }
+
+    private fun stopServiceSafe() {
+        _isRunning.value = false
+        if (!isForeground) {
+            startForegroundPlaceholder()
+        }
+
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        isForeground = false
+        stopSelf()
+    }
+
+    override fun onDestroy() {
+        Timber.tag(TAG).d("Service lifecycle | onDestroy - Service destroyed")
+        _isRunning.value = false
+        serviceScope.cancel()
         super.onDestroy()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    private suspend fun updateNotification() {
-        if (!PreferenceUtil.getBoolean("keep_alive_enabled", false)) {
-            Log.d(TAG, "Keep-alive disabled, stopping service")
-            stopForegroundService()
-            return
-        }
+    private fun startForegroundPlaceholder() {
+        if (isForeground) return
 
+        try {
+            val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle(getString(R.string.keep_alive_notification_title))
+                .setContentText("Starting...")
+                .setSmallIcon(R.drawable.magic_wand_color)
+                .setPriority(NotificationCompat.PRIORITY_MIN)
+                .build()
+
+            startForeground(
+                NOTIFICATION_ID,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+            )
+            isForeground = true
+        } catch (e: Exception) {
+            Timber.tag(TAG).e(e, "Failed to start foreground service | Unable to show placeholder notification")
+        }
+    }
+
+    private suspend fun updateRealNotification(settings: AppSettings) {
         if (!hasNotificationPermission()) {
-            Log.w(TAG, "Notification permission missing, stopping service")
-            stopForegroundService()
+            Timber.tag(TAG).w("Permission missing | Cannot send notification: POST_NOTIFICATIONS required")
             return
         }
 
-        val stats = runCatching {
-            LogManager.getStatistics(this)
-        }.getOrElse {
-            Log.e(TAG, "Failed to load statistics", it)
-            null
-        } ?: LogManager.Statistics(
-            themeInstallCount = 0,
-            alarmInterceptCount = 0,
-            lastThemeInstallTime = 0,
-            lastAlarmInterceptTime = 0,
-            totalLogSize = 0
-        )
-
-        val notification = buildNotification(stats)
-
-        withContext(Dispatchers.Main) {
-            createNotificationChannelIfNeeded()
-            val manager = getSystemService(NotificationManager::class.java)
-            if (!isForeground) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                    startForeground(
-                        NOTIFICATION_ID,
-                        notification,
-                        android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
-                    )
-                } else {
-                    startForeground(NOTIFICATION_ID, notification)
-                }
-                isForeground = true
-            } else {
-                manager?.notify(NOTIFICATION_ID, notification)
-            }
+        val stats = withContext(Dispatchers.IO) {
+            calculateStatistics()
         }
+
+        Timber.tag(TAG).i("Refresh notification | Theme installs: ${stats.themeInstallCount}, Alarm intercepts: ${stats.alarmInterceptCount}")
+
+        val notification = buildNotification(stats, settings.isOptimizationModeEnabled)
+        val manager = getSystemService(NotificationManager::class.java)
+        manager?.notify(NOTIFICATION_ID, notification)
     }
 
-    private suspend fun stopForegroundService() {
-        withContext(Dispatchers.Main) {
-            if (isForeground) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    stopForeground(STOP_FOREGROUND_REMOVE)
-                } else {
-                    @Suppress("DEPRECATION")
-                    stopForeground(true)
+    private fun calculateStatistics(): Statistics {
+        val logDir = File(filesDir, "logs")
+        if (!logDir.exists()) return Statistics(0, 0)
+
+        val fileNameFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        val todayLogFile = File(logDir, "${fileNameFormat.format(Date())}.log")
+        val allFiles = logDir.listFiles { _, name -> name.endsWith(".log") } ?: emptyArray()
+
+        var themeInstallCount = 0
+        var alarmInterceptCount = 0
+
+        allFiles.forEach { file ->
+            try {
+                file.useLines { lines ->
+                    lines.forEach { line ->
+                        if (line.contains("/${LogFormatter.TAG_THEME_INSTALL}:")) {
+                            themeInstallCount++
+                        }
+                        if (line.contains("/${LogFormatter.TAG_ALARM_INTERCEPT}:")) {
+                            alarmInterceptCount++
+                        }
+                    }
                 }
-                isForeground = false
+            } catch (e: Exception) {
+                // Ignore file read errors
             }
-            stopSelf()
         }
+        return Statistics(themeInstallCount, alarmInterceptCount)
     }
 
-    private fun buildNotification(stats: LogManager.Statistics): Notification {
+    data class Statistics(val themeInstallCount: Int, val alarmInterceptCount: Int)
+
+    private fun buildNotification(stats: Statistics, isOptimizationEnabled: Boolean): Notification {
         val pendingIntent = PendingIntent.getActivity(
             this,
             0,
             Intent(this, MainActivity::class.java),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val stopPendingIntent = PendingIntent.getService(
+            this,
+            2,
+            Intent(this, KeepAliveService::class.java).apply { action = ACTION_STOP },
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
@@ -234,49 +301,33 @@ class KeepAliveService : Service() {
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.keep_alive_notification_title))
             .setContentText(contentText)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.magic_wand_color)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setShowWhen(false)
+            .setOnlyAlertOnce(true)
 
-        if (PreferenceUtil.getBoolean("optimization_mode_enabled", false)) {
-            val exitOptimizationIntent = Intent("com.merak.ACTION_EXIT_OPTIMIZATION").apply {
-                setPackage(packageName)
-            }
-            val exitPendingIntent = PendingIntent.getBroadcast(
-                this,
-                1,
-                exitOptimizationIntent,
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            )
-            builder.addAction(
-                0,
-                getString(R.string.optimization_mode_notification_action),
-                exitPendingIntent
-            )
-        }
+        builder.addAction(
+            0,
+            getString(R.string.action_stop),
+            stopPendingIntent
+        )
 
         return builder.build()
     }
 
     private fun hasNotificationPermission(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
-        } else {
-            NotificationManagerCompat.from(this).areNotificationsEnabled()
-        }
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED
     }
 
     private fun createNotificationChannelIfNeeded() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val manager = getSystemService(NotificationManager::class.java) ?: return
-        if (manager.getNotificationChannel(CHANNEL_ID) != null) {
-            return
-        }
+        if (manager.getNotificationChannel(CHANNEL_ID) != null) return
+
         val channel = NotificationChannel(
             CHANNEL_ID,
             getString(R.string.keep_alive_channel_name),

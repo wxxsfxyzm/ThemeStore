@@ -2,213 +2,206 @@ package com.merak.service
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.Build
 import android.util.Base64
-import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityManager
-import com.merak.R
-import com.merak.utils.LogManager
-import com.merak.service.KeepAliveService
+import com.merak.util.timber.LogFormatter
+import com.merak.x.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 /**
- * 广播拦截服务
- * 动态注册接收器拦截 MIUI 定时广播
+ * Broadcast interceptor service.
+ * Dynamically registers receiver to intercept MIUI scheduled broadcasts and prevent theme from reverting to default.
  */
+@SuppressLint("AccessibilityPolicy")
 class ThemeInstallAccessibilityService : AccessibilityService() {
 
     companion object {
-        private const val ACTION_SERVICE_UP = "com.merak.action_Service_UP"
+        const val ACTION_SERVICE_UP = "com.merak.action_Service_UP"
+        const val ACTION_SERVICE_DOWN = "com.merak.action_Service_DOWN"
+
+        // Log Tag, used for UI parsing
+        private const val TAG = "ThemeAccessibility"
+
+        // "miui.intent.action.CHECK_TIME_UP"
         private val ALARM_ACTION = String(
             Base64.decode("bWl1aS5pbnRlbnQuYWN0aW9uLkNIRUNLX1RJTUVfVVA=", Base64.DEFAULT)
         )
-        @Volatile private var isApplyUserTheme = false
-        @Volatile private var isConnected = false
-        @Volatile private var lastEventTime = 0L
-        @Volatile private var st_connectedTime = ""
-        @Volatile private var st_currentTime = ""
-        @Volatile private var st_receiveTime = ""
-        
-        @JvmStatic
+
+        @Volatile
+        private var isConnected = false
+
+        @Volatile
+        private var st_connectedTime = ""
+
+        @Volatile
+        private var st_receiveTime = ""
+
+        // Static method: Check if service is enabled
         fun isAccessibilityServiceEnabled(
             context: Context,
             clazz: Class<out AccessibilityService>
         ): Boolean {
-            val accessibilityManager = context.getSystemService(Context.ACCESSIBILITY_SERVICE) 
-                as? AccessibilityManager ?: return false
-            
-            val enabledServices = accessibilityManager.getEnabledAccessibilityServiceList(
+            val am = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as? AccessibilityManager
+                ?: return false
+
+            val enabledServices = am.getEnabledAccessibilityServiceList(
                 AccessibilityServiceInfo.FEEDBACK_ALL_MASK
             )
-            
-            for (serviceInfo in enabledServices) {
-                val serviceInfoDetail = serviceInfo.resolveInfo.serviceInfo
-                if (serviceInfoDetail.packageName == context.packageName &&
-                    serviceInfoDetail.name == clazz.name) {
-                    return true
-                }
+
+            val myComponentName = "${context.packageName}/${clazz.name}"
+
+            return enabledServices.any {
+                "${it.resolveInfo.serviceInfo.packageName}/${it.resolveInfo.serviceInfo.name}" == myComponentName
             }
-            return false
         }
-        
-        @JvmStatic
+
         fun isConnected(): Boolean = isConnected
-        
-        @JvmStatic
         fun getConnectedTime(): String = st_connectedTime
-        
-        @JvmStatic
         fun getReceiveTime(): String = st_receiveTime
-        
-        // 触发通知更新的 Action
-        const val ACTION_UPDATE_NOTIFICATION = "com.merak.ACTION_UPDATE_NOTIFICATION"
-        const val ACTION_REFRESH_NOTIFICATION = "com.merak.ACTION_REFRESH_NOTIFICATION"
     }
 
-    private val dateFormat = SimpleDateFormat("yyyy年MM月dd日 HH时mm分ss秒", Locale.getDefault())
-    private val dateFormat_u = SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault())
-    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    // Dynamic broadcast receiver for external system intents only
     private val mBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent == null || context == null) return
-            
-            when (intent.action) {
-                ALARM_ACTION -> {
-                    abortBroadcast()
-                    
-                    val currentTime = System.currentTimeMillis()
-                    st_receiveTime = getRst() + dateFormat.format(Date(currentTime))
-                    lastEventTime = currentTime
 
-                    serviceScope.launch(Dispatchers.IO) {
-                        try {
-                            com.merak.utils.LogManager.log(
-                                context,
-                                com.merak.utils.LogManager.LogType.ALARM_INTERCEPT,
-                                context.getString(com.merak.R.string.log_alarm_intercepted),
-                                buildString {
-                                    append(context.getString(com.merak.R.string.log_broadcast_action))
-                                    append(" $ALARM_ACTION\n")
-                                    append(context.getString(com.merak.R.string.receive_time_st))
-                                    append(" $st_receiveTime\n")
-                                    append(context.getString(com.merak.R.string.log_intercept_status))
-                                    append(" ")
-                                    append(context.getString(com.merak.R.string.log_status_success))
-                                }
-                            )
-                        } catch (e: Exception) {
-                            Log.e("HyperThemeService", "记录日志失败", e)
-                        } finally {
-                            KeepAliveService.requestRefresh(applicationContext)
-                        }
-                    }
+            if (intent.action == ALARM_ACTION) {
+                // Intercept broadcast to prevent system from reverting to default theme
+                // Wrapped in try-catch in case it's not an ordered broadcast in newer MIUI versions
+                try {
+                    abortBroadcast()
+                } catch (e: Exception) {
+                    Timber.tag(TAG).e(e, "Intercept failed | Broadcast might not be ordered")
                 }
-                ACTION_UPDATE_NOTIFICATION, ACTION_REFRESH_NOTIFICATION -> {
-                    Log.d("HyperThemeService", "收到通知更新广播: ${intent.action}")
-                    KeepAliveService.requestRefresh(context.applicationContext)
-                }
+
+                val now = Date()
+                st_receiveTime = dateFormat.format(now)
+
+                // Use LogFormatter to record interception log
+                LogFormatter.logAlarmIntercept(
+                    title = context.getString(R.string.alarm_intercept_title),
+                    content = context.getString(R.string.alarm_intercept_content, ALARM_ACTION, st_receiveTime)
+                )
+
+                // Refresh KeepAliveService notification to show latest intercept count
+                KeepAliveService.requestRefresh(context.applicationContext)
             }
         }
     }
 
-    override fun onAccessibilityEvent(event: AccessibilityEvent?) {}
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        // We don't need to handle specific accessibility events, just utilize the service lifecycle
+    }
 
-    override fun onInterrupt() {}
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
+    override fun onInterrupt() {
+        Timber.tag(TAG).w("Service status | Accessibility service interrupted by system")
+    }
 
     override fun onServiceConnected() {
-        Log.d("HyperThemeService", "===== 无障碍服务已连接 onServiceConnected() =====")
-        
-        KeepAliveService.requestRefresh(applicationContext)
-        
-        Intent(ACTION_SERVICE_UP).apply {
-            setPackage("com.merak")
-            sendBroadcast(this)
-        }
         super.onServiceConnected()
+        Timber.tag(TAG).i("Service status | Accessibility service connected")
+
+        // Configure service info programmatically to ensure flags are active
+        val info = AccessibilityServiceInfo().apply {
+            eventTypes = AccessibilityEvent.TYPES_ALL_MASK
+            feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
+            notificationTimeout = 100
+            flags = AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
+                    AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
+        }
+        serviceInfo = info
+
+        KeepAliveService.requestRefresh(applicationContext)
+        sendServiceUpBroadcast()
     }
 
-    override fun onUnbind(intent: Intent?): Boolean = super.onUnbind(intent)
-
     override fun onCreate() {
-        Log.d("HyperThemeService", "===== 无障碍服务 onCreate() =====")
+        super.onCreate()
+        Timber.tag(TAG).d("Service lifecycle | onCreate - Service starting")
+
         if (isConnected) {
-            Log.w("HyperThemeService", "服务已连接，onCreate() 跳过")
+            Timber.tag(TAG).w("Service status | Service already connected, skipping initialization")
             return
         }
-        
-        Intent(ACTION_SERVICE_UP).apply {
-            setPackage("com.merak")
-            sendBroadcast(this)
-        }
-        
-        st_connectedTime = dateFormat_u.format(Date(System.currentTimeMillis()))
-        
+
+        st_connectedTime = dateFormat.format(Date())
+
+        // Register high priority broadcast receiver for system intents
         val intentFilter = IntentFilter().apply {
             addAction(ALARM_ACTION)
+            // Optional: Listen to screen off to prevent being killed
             addAction(Intent.ACTION_SCREEN_OFF)
-            addAction(ACTION_UPDATE_NOTIFICATION)
-            addAction(ACTION_REFRESH_NOTIFICATION)
-            priority = 1000
+            priority = IntentFilter.SYSTEM_HIGH_PRIORITY
         }
-        
-        if (Build.VERSION.SDK_INT >= 33) {
-            registerReceiver(mBroadcastReceiver, intentFilter, Context.RECEIVER_NOT_EXPORTED)
-        } else {
-            try {
-                Context::class.java.getMethod(
-                    "registerReceiver",
-                    BroadcastReceiver::class.java,
-                    IntentFilter::class.java
-                ).invoke(this, mBroadcastReceiver, intentFilter)
-            } catch (e: Exception) {
-                throw RuntimeException(e)
-            }
+
+        try {
+            // Must use RECEIVER_EXPORTED to receive broadcasts from MIUI system packages
+            registerReceiver(mBroadcastReceiver, intentFilter, Context.RECEIVER_EXPORTED)
+        } catch (e: Exception) {
+            Timber.tag(TAG).e(e, "Registration failed | Broadcast receiver registration exception")
         }
-        
+
         isConnected = true
-        super.onCreate()
+        sendServiceUpBroadcast()
     }
 
     override fun onDestroy() {
+        Timber.tag(TAG).d("Service lifecycle | onDestroy - Service destroyed")
+
         if (isConnected) {
-            unregisterReceiver(mBroadcastReceiver)
+            try {
+                unregisterReceiver(mBroadcastReceiver)
+            } catch (e: Exception) {
+                // Ignore receiver not registered exception
+            }
             isConnected = false
         }
 
         serviceScope.cancel()
-        
-        Intent(ACTION_SERVICE_UP).apply {
-            setPackage("io.vi.hypertheme")
-            sendBroadcast(this)
-        }
-        
         super.onDestroy()
     }
 
-    override fun onTaskRemoved(rootIntent: Intent?) {
-        super.onTaskRemoved(rootIntent)
+    override fun onUnbind(intent: Intent?): Boolean {
+        Timber.tag(TAG).d("Service lifecycle | onUnbind - Service unbound")
+        sendServiceDownBroadcast()
+        return super.onUnbind(intent)
     }
 
-    private fun getRst(): String {
-        return try {
-            resources.getString(com.merak.R.string.receive_time_st) + " "
+    private fun sendServiceUpBroadcast() {
+        try {
+            val intent = Intent(ACTION_SERVICE_UP).apply {
+                setPackage(packageName)
+            }
+            sendBroadcast(intent)
         } catch (e: Exception) {
-            ""
+            Timber.tag(TAG).e(e, "Broadcast failed | ServiceUp broadcast exception")
+        }
+    }
+
+    private fun sendServiceDownBroadcast() {
+        try {
+            val intent = Intent(ACTION_SERVICE_DOWN).apply {
+                setPackage(packageName)
+            }
+            sendBroadcast(intent)
+        } catch (e: Exception) {
+            Timber.tag(TAG).e(e, "Broadcast failed | ServiceDown broadcast exception")
         }
     }
 }

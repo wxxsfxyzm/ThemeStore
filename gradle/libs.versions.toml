@@ -1,22 +1,95 @@
-[versions]
-agp = "8.13.0"
-kotlin = "2.2.20"
-coreKtx = "1.10.1"
-junit = "4.13.2"
-junitVersion = "1.1.5"
-espressoCore = "3.5.1"
-appcompat = "1.6.1"
-material = "1.10.0"
+# Google Maven
+# https://maven.google.com/web/index.html?hl=zh-cn
 
-[libraries]
-androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
-junit = { group = "junit", name = "junit", version.ref = "junit" }
-androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
-androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
-androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+# Gradle Plugins
+# https://plugins.gradle.org/
+
+# Maven
+# https://mvnrepository.com/
+
+[versions]
+agp = "9.0.1"
+kotlin = "2.3.10"
+ksp = "2.3.4"
+composeBom = "2026.02.00"
+compose = "1.10.3"
+m3color = "2025.4"
+haze = "1.7.2"
+splashScreen = "1.2.0"
+material3 = "1.5.0-alpha14"
+room = "2.8.4"
+ktx-serialization = "1.10.0"
+rikka-shizuku = "13.1.5"
+koin-bom = "4.1.1"
+datastoreCoreAndroid = "1.2.0"
+aboutLibraries = "13.2.1"
+timber = "5.0.1"
+miuix = "0.8.3"
 
 [plugins]
-android-application = { id = "com.android.application", version.ref = "agp" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+agp-lib = { id = "com.android.library", version.ref = "agp" }
+agp-app = { id = "com.android.application", version.ref = "agp" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+room = { id = "androidx.room", version.ref = "room" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+aboutLibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutLibraries" }
 
+[libraries]
+androidx-core = { group = "androidx.core", name = "core-ktx", version = "1.17.0" }
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version = "1.12.4" }
+androidx-lifecycle = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version = "2.10.0" }
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastoreCoreAndroid" }
+androix-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "splashScreen" }
+
+m3color = { module = "com.github.Kyant0:m3color", version.ref = "m3color" }
+haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
+haze-materials = { module = "dev.chrisbanes.haze:haze-materials", version.ref = "haze" }
+compose-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "compose" }
+compose-ui-graphics = { module = "androidx.compose.ui:ui-graphics", version.ref = "compose" }
+compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "compose" }
+compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview", version.ref = "compose" }
+compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest", version.ref = "compose" }
+compose-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
+compose-navigation = { group = "androidx.navigation", name = "navigation-compose", version = "2.9.7" }
+compose-materialIcons = { group = "androidx.compose.material", name = "material-icons-extended", version = "1.7.8" }
+compose-runtime-tracing = { module = "androidx.compose.runtime:runtime-tracing" }
+
+room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
+
+# Kotlin Serialization
+# https://github.com/Kotlin/kotlinx.serialization/blob/master/README.md#setup
+# https://github.com/Kotlin/kotlinx.serialization/blob/master/formats/README.md
+ktx-serializationJson = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "ktx-serialization" }
+# AndroidHiddenApiBypass
+# https://github.com/LSPosed/AndroidHiddenApiBypass
+hiddenapibypass = { group = "org.lsposed.hiddenapibypass", name = "hiddenapibypass", version = "6.1" }
+
+# Koin Inject
+# https://insert-koin.io/docs/setup/koin
+koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin-bom" }
+koin-core = { module = "io.insert-koin:koin-core" }
+koin-android = { group = "io.insert-koin", name = "koin-android" }
+koin-compose = { group = "io.insert-koin", name = "koin-androidx-compose" }
+koin-compose-viewmodel = { group = "io.insert-koin", name = "koin-compose-viewmodel" }
+
+# Rikka Shizuku
+# https://github.com/RikkaApps/Shizuku-API
+rikka-shizuku-api = { group = "dev.rikka.shizuku", name = "api", version.ref = "rikka-shizuku" }
+rikka-shizuku-provider = { group = "dev.rikka.shizuku", name = "provider", version.ref = "rikka-shizuku" }
+
+# Core module (required for accessing library data)
+aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutLibraries" }
+# Compose UI modules (choose one or both)
+aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutLibraries" } # Material 3 UI
+
+# log
+timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
+
+# miuix
+miuix = { group = "top.yukonga.miuix.kmp", name = "miuix-android", version.ref = "miuix" }
+miuix-icons = { group = "top.yukonga.miuix.kmp", name = "miuix-icons-android", version.ref = "miuix" }

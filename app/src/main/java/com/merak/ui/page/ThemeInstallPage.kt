@@ -1,8 +1,6 @@
 package com.merak.ui.page
 
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,6 +9,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,9 +22,10 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.merak.R
-import com.merak.utils.ThemeInstaller
+import com.merak.ui.components.MiuixBackButton
+import com.merak.x.R
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CircularProgressIndicator
@@ -36,19 +37,18 @@ import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.TextField
 import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.basic.rememberTopAppBarState
-import top.yukonga.miuix.kmp.basic.Icon
-import top.yukonga.miuix.kmp.basic.IconButton
-import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.icons.useful.Back
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 
 @Composable
 fun ThemeInstallPage(
     onBack: () -> Unit,
-    onNavigateToFilePicker: () -> Unit = {}
+    onNavigateToFilePicker: () -> Unit = {},
+    viewModel: ThemeInstallViewModel = koinViewModel() // 注入 ViewModel
 ) {
+    val context = LocalContext.current
     val scrollBehavior = MiuixScrollBehavior(rememberTopAppBarState())
     val coroutineScope = rememberCoroutineScope()
+
     val tabs = listOf(
         stringResource(R.string.tab_local),
         stringResource(R.string.tab_online)
@@ -56,21 +56,31 @@ fun ThemeInstallPage(
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { tabs.size })
     val selectedTabIndex by remember { derivedStateOf { pagerState.currentPage } }
 
+    // 监听 ViewModel 事件
+    LaunchedEffect(Unit) {
+        viewModel.installEvent.collect { event ->
+            when (event) {
+                is InstallEvent.ShowToast -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
+
+                is InstallEvent.NavigateBack -> {
+                    onBack()
+                }
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = stringResource(R.string.home_install_title),
                 scrollBehavior = scrollBehavior,
                 navigationIcon = {
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.padding(start = 18.dp)
-                    ) {
-                        Icon(
-                            imageVector = MiuixIcons.Useful.Back,
-                            contentDescription = "返回"
-                        )
-                    }
+                    MiuixBackButton(
+                        modifier = Modifier.padding(start = 16.dp),
+                        onClick = onBack
+                    )
                 }
             )
         }
@@ -102,7 +112,8 @@ fun ThemeInstallPage(
                 ) { page ->
                     when (page) {
                         0 -> LocalInstallView(onNavigateToFilePicker)
-                        1 -> OnlineInstallView()
+                        // 将 ViewModel 传递给 OnlineInstallView 或者传递状态和回调
+                        1 -> OnlineInstallView(viewModel)
                     }
                 }
             }
@@ -127,7 +138,7 @@ fun LocalInstallView(onNavigateToFilePicker: () -> Unit) {
                 modifier = Modifier.padding(16.dp)
             )
         }
-        
+
         TextButton(
             modifier = Modifier
                 .fillMaxWidth()
@@ -140,12 +151,12 @@ fun LocalInstallView(onNavigateToFilePicker: () -> Unit) {
 }
 
 @Composable
-fun OnlineInstallView() {
+fun OnlineInstallView(viewModel: ThemeInstallViewModel) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
     var url by remember { mutableStateOf("") }
-    var isDownloading by remember { mutableStateOf(false) }
-    
+    // 从 ViewModel 获取下载状态
+    val isDownloading by viewModel.isDownloading.collectAsState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -161,7 +172,7 @@ fun OnlineInstallView() {
                 modifier = Modifier.padding(16.dp)
             )
         }
-        
+
         TextField(
             value = url,
             onValueChange = { url = it },
@@ -172,7 +183,7 @@ fun OnlineInstallView() {
             singleLine = true,
             enabled = !isDownloading
         )
-        
+
         if (isDownloading) {
             CircularProgressIndicator(
                 modifier = Modifier
@@ -187,64 +198,10 @@ fun OnlineInstallView() {
                 colors = ButtonDefaults.textButtonColorsPrimary(),
                 text = stringResource(R.string.download_install),
                 onClick = {
-                    if (url.isBlank()) {
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.input_url_hint),
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        return@TextButton
-                    }
-                    
-                    coroutineScope.launch {
-                        isDownloading = true
-                        try {
-                            Toast.makeText(
-                                context,
-                                context.getString(R.string.download_started),
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            
-                            val result = ThemeInstaller.installThemeFromUrl(url)
-                            
-                            result.fold(
-                                onSuccess = { file ->
-                                    com.merak.utils.LogManager.log(
-                                        context,
-                                        com.merak.utils.LogManager.LogType.THEME_INSTALL,
-                                        context.getString(com.merak.R.string.log_theme_install_success),
-                                        "${context.getString(com.merak.R.string.log_file)} ${file.name}, ${context.getString(com.merak.R.string.log_size)} ${file.length()} bytes"
-                                    )
-                                    
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.download_complete),
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                    ThemeInstaller.applyTheme(context)
-                                },
-                                onFailure = { error ->
-                                    com.merak.utils.LogManager.log(
-                                        context,
-                                        com.merak.utils.LogManager.LogType.ERROR,
-                                        context.getString(com.merak.R.string.log_theme_install_failed),
-                                        error.message
-                                    )
-                                    
-                                    Toast.makeText(
-                                        context,
-                                        "${context.getString(R.string.download_failed)}: ${error.message}",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                            )
-                        } finally {
-                            isDownloading = false
-                        }
-                    }
+                    // 所有的逻辑都委托给 ViewModel
+                    viewModel.installOnlineTheme(context, url)
                 }
             )
         }
     }
 }
-

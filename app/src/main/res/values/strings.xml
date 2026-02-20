@@ -1,142 +1,197 @@
 <resources>
-    <string name="app_name">ThemeStore</string>
-    <string name="title_home">首页</string>
-    <string name="title_settings">设置</string>
-    <string name="home_install_title">主题安装</string>
-    <string name="home_install_summary">安装本地/在线主题包</string>
-    <string name="language_label">语言</string>
-    <string name="lang_zh_cn">简体中文</string>
-    <string name="lang_zh_tw">繁體中文</string>
+    <string name="app_name">ThemeStoreX</string>
+    <string name="title_home">Home</string>
+    <string name="title_settings">Settings</string>
+    <string name="home_install_title">Theme Install</string>
+    <string name="home_install_summary">Install local/online theme package</string>
+    <string name="language_label">Language</string>
+    <string name="lang_zh_cn">Chinese Simplified</string>
+    <string name="lang_zh_tw">Chinese Traditional</string>
     <string name="lang_en">English</string>
-    <string name="color_mode">颜色模式</string>
-    <string name="color_system">跟随系统</string>
-    <string name="color_light">浅色</string>
-    <string name="color_dark">深色</string>
-    <string name="tab_local">本地</string>
-    <string name="tab_online">在线</string>
-    <string name="local_install_desc">从设备存储中选择主题文件进行安装</string>
-    <string name="select_theme_file">选择主题文件</string>
-    <string name="online_install_desc">输入主题下载链接，自动下载并安装</string>
-    <string name="theme_url_label">主题下载链接</string>
-    <string name="download_install">下载并安装</string>
-    <string name="welcome_title">欢迎使用</string>
-    <string name="privacy_title">隐私政策</string>
-    <string name="privacy_accept">同意</string>
-    <string name="privacy_reject">拒绝</string>
-    <string name="setup_complete">设置完成</string>
-    <string name="enter_app">进入软件</string>
-    <string name="privacy_content">欢迎使用本应用（以下简称"本App"）。我们重视您的个人信息保护，请您阅读以下内容，了解我们如何收集和使用信息：\n\n【1. 收集的信息】\n- 设备信息（如型号、系统版本等）\n- 使用数据（如启动次数、崩溃信息等）\n\n【2. 信息用途】\n- 用于优化产品与服务体验\n- 进行数据分析和故障排查\n- 遵守相关法律法规\n\n【3. 信息保护】\n我们会采取合理措施保障信息安全，防止泄露、丢失或非法访问。\n\n【4. 您的权利】\n- 有权选择是否同意本政策\n- 可随时停止使用本App\n- 如有疑问，可随时联系我们\n\n【5. 政策更新】\n我们可能适时更新隐私政策，变更内容将在App中通知。</string>
-    <string name="welcome_language_title">语言设置</string>
-    <string name="welcome_language_desc">请选择您偏好的语言</string>
-    <string name="permission_title">权限请求</string>
-    <string name="permission_desc">为了更好地使用本应用，请授予以下权限</string>
-    <string name="permission_storage_title">文件管理权限</string>
-    <string name="permission_storage_desc">用于存储和读取主题文件</string>
-    <string name="permission_accessibility_title">无障碍权限</string>
-    <string name="permission_accessibility_desc">用于自动安装主题</string>
-    <string name="permission_notification_title">通知权限</string>
-    <string name="permission_notification_desc">用于发送安装进度通知</string>
-    <string name="permission_already_granted">权限已授予</string>
-    <string name="next_step">下一步</string>
-    <string name="copying_theme">正在复制主题...</string>
-    <string name="theme_copied">主题文件已复制</string>
-    <string name="copy_failed">复制失败</string>
-    <string name="download_started">开始下载主题...</string>
-    <string name="download_complete">下载完成</string>
-    <string name="download_failed">下载失败</string>
-    <string name="input_url_hint">请输入主题下载链接</string>
-    <string name="theme_manager_not_found">启动主题管理器失败</string>
-    <string name="empty_folder">此文件夹为空</string>
-    
-    <!-- 无障碍服务 -->
+    <string name="color_mode">Color Mode</string>
+    <string name="color_system">Follow System</string>
+    <string name="color_light">Light</string>
+    <string name="color_dark">Dark</string>
+    <string name="tab_local">Local</string>
+    <string name="tab_online">Online</string>
+    <string name="local_install_desc">Select theme file from device storage to install</string>
+    <string name="select_theme_file">Select Theme File</string>
+    <string name="online_install_desc">Enter theme download URL for automatic download and installation</string>
+    <string name="theme_url_label">Theme Download URL</string>
+    <string name="download_install">Download &amp; Install</string>
+    <string name="welcome_title">Welcome</string>
+    <string name="privacy_title">Privacy Policy</string>
+    <string name="privacy_accept">Accept</string>
+    <string name="privacy_reject">Reject</string>
+    <string name="setup_complete">Setup Complete</string>
+    <string name="enter_app">Enter App</string>
+    <string name="privacy_content">Welcome to this application (hereinafter referred to as "the App"). We value the protection of your personal information. Please read the following to understand how we collect and use information:\n\n【1. Information Collected】\n- Device information (such as model, system version, etc.)\n- Usage data (such as launch count, crash information, etc.)\n\n【2. Information Usage】\n- To optimize product and service experience\n- For data analysis and troubleshooting\n- To comply with relevant laws and regulations\n\n【3. Information Protection】\nWe will take reasonable measures to ensure information security and prevent leakage, loss, or illegal access.\n\n【4. Your Rights】\n- You have the right to choose whether to agree to this policy\n- You can stop using this App at any time\n- If you have any questions, please contact us at any time\n\n【5. Policy Updates】\nWe may update the privacy policy from time to time, and changes will be notified in the App.</string>
+    <string name="welcome_language_title">Language Settings</string>
+    <string name="welcome_language_desc">Please select your preferred language</string>
+    <string name="permission_title">Permission Request</string>
+    <string name="permission_desc">To use this app better, please grant the following permissions</string>
+    <string name="permission_storage_title">Storage Permission</string>
+    <string name="permission_storage_desc">For storing and reading theme files</string>
+    <string name="permission_accessibility_title">Accessibility Permission</string>
+    <string name="permission_accessibility_desc">For automatic theme installation</string>
+    <string name="permission_notification_title">Notification Permission</string>
+    <string name="permission_notification_desc">For sending installation progress notifications</string>
+    <string name="permission_already_granted">Permission already granted</string>
+    <string name="next_step">Next</string>
+    <string name="skip">Skip</string>
+    <string name="copying_theme">Copying theme…</string>
+    <string name="theme_copied">Theme file copied</string>
+    <string name="copy_failed">Copy failed</string>
+    <string name="download_started">Downloading theme…</string>
+    <string name="download_complete">Download complete</string>
+    <string name="download_failed">Download failed</string>
+    <string name="input_url_hint">Please enter theme download URL</string>
+    <string name="theme_manager_not_found">Failed to launch Theme Manager</string>
+    <string name="empty_folder">This folder is empty</string>
+
+    <!-- Accessibility Service -->
     <string name="accessibility_service_label">ThemeStore</string>
-    <string name="accessibility_service_description">依托无障碍服务动态注册广播接收器（优先级 1000），优先接收 MIUI 闹钟广播和系统灭屏广播。注意：普通广播仅能优先接收，无法阻断传递。运行在独立进程中。</string>
-    
-    <string name="home_accessibility_title">无障碍服务</string>
-    <string name="home_accessibility_enabled_summary">已开启，可自动拦截定时广播</string>
-    <string name="home_accessibility_disabled_summary">未开启，点击前往系统无障碍设置</string>
-    <string name="home_accessibility_status_on">已连接</string>
-    <string name="home_accessibility_status_off">未连接</string>
-    
-    <!-- 日志功能 -->
-    <string name="home_tools_title">工具</string>
-    <string name="log_title">日志与统计</string>
-    <string name="log_summary">查看主题安装和闹钟拦截日志</string>
-    <string name="log_statistics_title">统计信息</string>
-    <string name="log_list_title">日志列表</string>
-    <string name="log_empty">暂无日志记录</string>
-    <string name="log_clear_confirm_title">确认清空</string>
-    <string name="log_clear_confirm_message">确定要清空所有日志和统计数据吗？此操作不可恢复。</string>
-    <string name="log_stat_theme_install">主题安装次数</string>
-    <string name="log_stat_alarm_intercept">闹钟监听次数</string>
-    <string name="log_stat_log_size">日志大小</string>
-    <string name="log_stat_times">次</string>
-    <string name="log_stat_never">从未</string>
-    <string name="log_stat_entries">条</string>
-    <string name="confirm">确定</string>
-    <string name="cancel">取消</string>
-    
+    <string name="accessibility_service_description">Dynamically registers broadcast receiver (priority 1000) via accessibility service to receive MIUI alarm and screen-off broadcasts. Note: Normal broadcasts can only be received with priority, not blocked. Runs in an independent process.</string>
+    <string name="home_accessibility_title">Accessibility Service</string>
+    <string name="home_accessibility_enabled_summary">Enabled – timed broadcast interception active</string>
+    <string name="home_accessibility_disabled_summary">Disabled – tap to open system accessibility settings</string>
+    <string name="home_accessibility_status_on">Connected</string>
+    <string name="home_accessibility_status_off">Not connected</string>
+
+    <!-- Log Function -->
+    <string name="home_tools_title">Tools</string>
+    <string name="log_title">Logs &amp; Statistics</string>
+    <string name="log_summary">View theme installation and alarm interception logs</string>
+    <string name="log_statistics_title">Statistics</string>
+    <string name="log_list_title">Log List</string>
+    <string name="log_empty">No logs yet</string>
+    <string name="log_clear_confirm_title">Confirm Clear</string>
+    <string name="log_clear_confirm_message">Are you sure you want to clear all logs and statistics? This action cannot be undone.</string>
+    <string name="log_stat_theme_install">Theme Installations</string>
+    <string name="log_stat_alarm_intercept">Alarm Detections</string>
+    <string name="log_stat_log_size">Log Size</string>
+    <string name="log_stat_times">times</string>
+    <string name="log_stat_never">Never</string>
+    <string name="log_stat_entries">entries</string>
+    <string name="confirm">Confirm</string>
+    <string name="cancel">Cancel</string>
+    <string name="alarm_intercept_title">MIUI scheduled broadcast intercepted</string>
+    <string name="alarm_intercept_content">Action: %1$s\nTime: %2$s</string>
+
     <!-- Service -->
-    <string name="receive_time_st">接收时间:</string>
-    
+    <string name="receive_time_st">Receive Time:</string>
+    <string name="action_stop">Stop Service</string>
+
     <!-- LogManager -->
-    <string name="log_file_not_found">日志文件不存在</string>
-    <string name="log_alarm_intercepted">MIUI 定时广播已拦截</string>
-    <string name="log_broadcast_action">广播 Action:</string>
-    <string name="log_intercept_status">拦截状态:</string>
-    <string name="log_status_success">成功</string>
-    <string name="log_theme_install_success">主题安装成功</string>
-    <string name="log_theme_install_failed">主题安装失败</string>
-    <string name="log_file">文件:</string>
-    <string name="log_size">大小:</string>
-    
+    <string name="log_stats_title">Stats</string>
+    <string name="log_file_not_found">Log file not found</string>
+    <string name="log_alarm_intercepted">MIUI Alarm Broadcast Intercepted</string>
+    <string name="log_broadcast_action">Broadcast Action:</string>
+    <string name="log_intercept_status">Intercept Status:</string>
+    <string name="log_status_success">Success</string>
+    <string name="log_theme_install_success">Theme installed successfully</string>
+    <string name="log_theme_install_failed">Theme installation failed</string>
+    <string name="log_file">File:</string>
+    <string name="log_size">Size:</string>
+
     <!-- LogPage -->
-    <string name="log_statistics_card_title">运行统计</string>
-    <string name="log_total_count">日志总数: %1$d 条</string>
-    <string name="log_file_size_label">日志大小</string>
-    <string name="log_label_theme_install">主题安装</string>
-    <string name="log_label_alarm_intercept">广播拦截</string>
-    <string name="log_detail_file_size">文件大小</string>
-    <string name="log_detail_size">大小</string>
-    <string name="log_count_unit">次</string>
-    
+    <string name="log_statistics_card_title">Statistics</string>
+    <string name="log_total_count">Total: %1$d entries</string>
+    <string name="log_file_size_label">Log Size</string>
+    <string name="log_label_theme_install">Theme Install</string>
+    <string name="log_label_alarm_intercept">Broadcast Intercept</string>
+    <string name="log_detail_file_size">File Size</string>
+    <string name="log_detail_size">Size</string>
+    <string name="log_count_unit">times</string>
+
     <!-- About -->
-    <string name="about_title">关于</string>
-    <string name="about_version_label">版本</string>
-    <string name="about_build_time_label">编译时间</string>
-    <string name="about_contributors">开发者</string>
-    <string name="about_developer">开发者</string>
-    <string name="about_developer_avatar">开发者头像</string>
-    <string name="about_feedback">反馈交流</string>
-    <string name="about_feedback_desc">加入QQ群反馈问题</string>
-    <string name="about_support">支持开发</string>
-    <string name="about_sponsor">赞助作者</string>
-    <string name="about_sponsor_summary">点这里看看</string>
-    <string name="about_sponsor_toast">不用给我赞助了，请自己吃一顿好吃的吧</string>
-    <string name="about_others">其他</string>
+    <string name="about_title">About</string>
+    <string name="about_version_label">Version</string>
+    <string name="about_build_time_label">Build Time</string>
+    <string name="about_contributors">Developer</string>
+    <string name="about_developer">Developer</string>
+    <string name="about_developer_avatar">Developer Avatar</string>
+    <string name="about_feedback">Feedback</string>
+    <string name="about_feedback_desc">Join QQ Group for feedback</string>
+    <string name="about_support">Support</string>
+    <string name="about_sponsor">Sponsor</string>
+    <string name="about_sponsor_summary">Tap to see a note</string>
+    <string name="about_sponsor_toast">No need to sponsor me—treat yourself to a good meal instead!</string>
+    <string name="about_others">Others</string>
     <string name="about_github">GitHub</string>
-    <string name="about_github_desc">查看项目源代码</string>
-    <string name="about_qq_not_installed">请安装QQ或更新QQ版本</string>
-    <string name="about_open_bilibili_failed">无法打开B站</string>
-    <string name="about_open_failed">打开失败</string>
-    <string name="back">返回</string>
-    
-    <!-- 常驻通知保活 -->
-    <string name="keep_alive_title">常驻通知保活</string>
-    <string name="keep_alive_summary">防止无障碍权限被关闭（优先保活子进程）</string>
-    <string name="keep_alive_channel_name">保活通知</string>
-    <string name="keep_alive_channel_desc">保持应用和无障碍服务运行，防止被系统清理</string>
-    <string name="keep_alive_notification_title">ThemeStore 运行中</string>
-    <string name="keep_alive_notification_content">安装:%1$d次 | 拦截:%2$d次</string>
-    <string name="keep_alive_notification_permission_required">请先授予通知权限才能开启常驻通知保活</string>
-    
-    <!-- 优化模式 -->
-    <string name="optimization_mode_title">优化模式</string>
-    <string name="optimization_mode_summary">仅保活后台服务，节省内存和CPU（需要无障碍权限）</string>
-    <string name="optimization_mode_dialog_title">开启优化模式</string>
-    <string name="optimization_mode_dialog_message">开启后将自动关闭APP界面，仅保留后台服务运行。\n\n优点：\n• 节省 200-300MB 内存\n• 降低 CPU 占用\n• 核心功能不受影响\n\n如需重新打开APP或关闭优化模式，请点击通知栏中的按钮。\n\n确定开启吗？</string>
-    <string name="optimization_mode_notification_action">退出优化</string>
-    <string name="optimization_mode_enabled_toast">优化模式已启用，APP 将在 2 秒后自动退出</string>
-    <string name="optimization_mode_disabled_toast">优化模式已关闭</string>
-    <string name="optimization_mode_require_accessibility">优化模式需要先开启无障碍权限</string>
+    <string name="about_github_desc">View source code</string>
+    <string name="about_qq_not_installed">Please install or update QQ</string>
+    <string name="about_open_bilibili_failed">Cannot open Bilibili</string>
+    <string name="about_open_failed">Failed to open</string>
+    <string name="back">Back</string>
+
+    <!-- Keep Alive Notification -->
+    <string name="keep_alive_title">Keep Alive Notification</string>
+    <string name="keep_alive_summary">Prevent accessibility permission closure (priority: child process)</string>
+    <string name="keep_alive_channel_name">Keep Alive Notification</string>
+    <string name="keep_alive_channel_desc">Keep app and accessibility service running, prevent system cleanup</string>
+    <string name="keep_alive_notification_title">ThemeStore Running</string>
+    <string name="keep_alive_notification_content">Installed:%1$d | Intercepted:%2$d</string>
+    <string name="keep_alive_notification_permission_required">Please grant notification permission before enabling keep-alive</string>
+
+    <!-- Optimization Mode -->
+    <string name="optimization_mode_title">Optimization Mode</string>
+    <string name="optimization_mode_summary">Keep only background service, save memory and CPU (requires accessibility)</string>
+    <string name="optimization_mode_dialog_title">Enable Optimization Mode</string>
+    <string name="optimization_mode_dialog_message">After enabling, the APP UI will close automatically, keeping only the background service running.\n\nBenefits:\n• Save 200–300MB memory\n• Reduce CPU usage\n• Core functions unaffected\n\nTo reopen the APP or disable optimization mode, tap the button in the notification.\n\nEnable now?</string>
+    <string name="optimization_mode_notification_action">Exit Optimization</string>
+    <string name="optimization_mode_enabled_toast">Optimization mode enabled, APP will exit in 2 seconds</string>
+    <string name="optimization_mode_disabled_toast">Optimization mode disabled</string>
+    <string name="optimization_mode_require_accessibility">Optimization mode requires accessibility permission first</string>
+
+    <string name="permission_shizuku_title">Shizuku Permission</string>
+    <string name="permission_shizuku_desc">Perform advanced system operations without Root</string>
+    <string name="shizuku_activated">Activated</string>
+    <string name="shizuku_authorize">Tap to authorize</string>
+    <string name="shizuku_not_available">Shizuku is not available</string>
+    <string name="shizuku_not_running">Shizuku is not running, please start the service</string>
+    <string name="shizuku_not_installed">Shizuku is not installed, please download it</string>
+
+    <string name="home_status_title">Status</string>
+    <string name="status_on">On</string>
+    <string name="status_off">Off</string>
+    <string name="shizuku_not_authorized">Unauthorized</string>
+    <string name="shizuku_running">Running</string>
+    <string name="close">Close</string>
+    <string name="copy">Copy</string>
+
+
+    <string name="theme_settings">Theme Settings</string>
+    <string name="personalization">Personalization</string>
+    <string name="theme_settings_desc">Change the theme of the app</string>
+    <string name="theme_settings_miuix_custom_colors">Custom Colors</string>
+    <string name="theme_settings_miuix_custom_colors_desc">Customize theme colors in Miuix theme style</string>
+    <string name="theme_settings_theme_mode">Theme Mode</string>
+    <string name="theme_settings_theme_mode_desc">Select theme mode</string>
+    <string name="theme_settings_theme_mode_light">Light theme</string>
+    <string name="theme_settings_theme_mode_dark">Dark theme</string>
+    <string name="theme_settings_theme_mode_system">Follow system theme</string>
+    <string name="theme_settings_palette_style">Palette Style</string>
+    <string name="theme_settings_palette_style_desc">Select palette style</string>
+    <string name="theme_settings_dynamic_color">Dynamic Color</string>
+    <string name="theme_settings_dynamic_color_desc">Theme color based on wallpaper</string>
+    <string name="theme_settings_theme_color">Theme Color</string>
+    <string name="color_default">Default</string>
+    <string name="color_pink">Pink</string>
+    <string name="color_red">Red</string>
+    <string name="color_orange">Orange</string>
+    <string name="color_amber">Amber</string>
+    <string name="color_yellow">Yellow</string>
+    <string name="color_lime">Lime</string>
+    <string name="color_green">Green</string>
+    <string name="color_cyan">Cyan</string>
+    <string name="color_teal">Teal</string>
+    <string name="color_light_blue">Light Blue</string>
+    <string name="color_blue">Blue</string>
+    <string name="color_indigo">Indigo</string>
+    <string name="color_purple">Purple</string>
+    <string name="color_deep_purple">Deep Purple</string>
+    <string name="color_blue_grey">Blue Grey</string>
+    <string name="color_brown">Brown</string>
+    <string name="color_grey">Grey</string>
 </resources>
