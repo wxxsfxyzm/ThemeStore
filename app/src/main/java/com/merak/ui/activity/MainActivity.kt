@@ -16,7 +16,6 @@ class MainActivity : ComponentActivity() {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        window.isNavigationBarContrastEnforced = false
 
         setContent {
             val mainViewModel: MainViewModel = koinViewModel()
@@ -26,7 +25,9 @@ class MainActivity : ComponentActivity() {
                 themeMode = uiState.themeMode,
                 useDynamicColor = uiState.useDynamicColor,
                 useMiuixMonet = uiState.useMiuixMonet,
-                seedColor = uiState.seedColor
+                seedColor = uiState.seedColor,
+                paletteStyle = uiState.paletteStyle,
+                colorSpec = uiState.colorSpec
             ) { App(uiState, mainViewModel) }
         }
     }

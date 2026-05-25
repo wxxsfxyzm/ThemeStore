@@ -1,5 +1,6 @@
 package com.merak.ui.page.settings.theme
 
+import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -42,13 +43,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import com.merak.ui.components.MiuixBackButton
 import com.merak.ui.components.MiuixSwitchWidget
 import com.merak.ui.theme.getMiuixAppBarColor
-import com.merak.ui.theme.m3color.RawColor
-import com.merak.ui.theme.m3color.ThemeMode
-import com.merak.ui.theme.m3color.dynamicColorScheme
+import com.merak.ui.theme.material.PaletteStyle
+import com.merak.ui.theme.material.RawColor
+import com.merak.ui.theme.material.ThemeColorSpec
+import com.merak.ui.theme.material.ThemeMode
+import com.merak.ui.theme.material.dynamicColorScheme
 import com.merak.ui.theme.rememberMiuixHazeStyle
 import com.merak.ui.theme.tsHazeEffect
 import com.merak.ui.util.getDisplayName
@@ -61,22 +63,22 @@ import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.SmallTitle
-import top.yukonga.miuix.kmp.basic.SpinnerEntry
+import top.yukonga.miuix.kmp.basic.DropdownItem
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TopAppBar
-import top.yukonga.miuix.kmp.extra.WindowSpinner
+import top.yukonga.miuix.kmp.preference.WindowSpinnerPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 
 @Composable
 fun AppearancePage(
-    navController: NavController,
+    onBack: () -> Unit,
+    hazeState: HazeState?,
     viewModel: AppearanceViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
     val scrollBehavior = MiuixScrollBehavior()
-    val hazeState = remember { HazeState() }
     val hazeStyle = rememberMiuixHazeStyle()
 
     Scaffold(
@@ -86,7 +88,7 @@ fun AppearancePage(
                 color = hazeState.getMiuixAppBarColor(),
                 title = stringResource(R.string.theme_settings),
                 navigationIcon = {
-                    MiuixBackButton(modifier = Modifier.padding(start = 16.dp), onClick = { navController.navigateUp() })
+                    MiuixBackButton(modifier = Modifier.padding(start = 16.dp), onClick = onBack)
                 },
                 scrollBehavior = scrollBehavior
             )
@@ -103,7 +105,24 @@ fun AppearancePage(
             overscrollEffect = null
         ) {
             item { Spacer(modifier = Modifier.size(12.dp)) }
-            item { SmallTitle(stringResource(R.string.theme_settings)) }
+            item { SmallTitle(stringResource(R.string.theme_settings_ui_style)) }
+            item {
+                Card(
+                    modifier = Modifier
+                        .padding(horizontal = 12.dp)
+                        .padding(bottom = 12.dp)
+                ) {
+                    MiuixSwitchWidget(
+                        title = stringResource(R.string.theme_settings_use_apple_floating_bar),
+                        description = stringResource(R.string.theme_settings_use_apple_floating_bar_desc),
+                        checked = state.useAppleFloatingBar,
+                        onCheckedChange = {
+                            viewModel.dispatch(AppearanceAction.SetUseAppleFloatingBar(it))
+                        }
+                    )
+                }
+            }
+            item { SmallTitle(stringResource(R.string.theme_settings_miuix_ui)) }
             item {
                 Card(
                     modifier = Modifier
@@ -114,6 +133,14 @@ fun AppearancePage(
                         currentThemeMode = state.themeMode,
                         onThemeModeChange = { newMode ->
                             viewModel.dispatch(AppearanceAction.SetThemeMode(newMode))
+                        }
+                    )
+                    MiuixSwitchWidget(
+                        title = stringResource(R.string.theme_settings_use_blur),
+                        description = stringResource(R.string.theme_settings_use_blur_desc),
+                        checked = state.useBlur,
+                        onCheckedChange = {
+                            viewModel.dispatch(AppearanceAction.SetUseBlur(it))
                         }
                     )
                     MiuixSwitchWidget(
@@ -138,12 +165,38 @@ fun AppearancePage(
                             }
                         )
                     }
+                    AnimatedVisibility(
+                        visible = state.useMiuixMonet,
+                        enter = fadeIn() + expandVertically(),
+                        exit = fadeOut() + shrinkVertically()
+                    ) {
+                        MiuixPaletteStyleWidget(
+                            currentPaletteStyle = state.paletteStyle,
+                            onPaletteStyleChange = { newStyle ->
+                                viewModel.dispatch(AppearanceAction.SetPaletteStyle(newStyle))
+                            }
+                        )
+                    }
+                    AnimatedVisibility(
+                        visible = state.useMiuixMonet,
+                        enter = fadeIn() + expandVertically(),
+                        exit = fadeOut() + shrinkVertically()
+                    ) {
+                        MiuixColorSpecWidget(
+                            currentColorSpec = state.colorSpec,
+                            currentPaletteStyle = state.paletteStyle,
+                            onColorSpecChange = { newSpec ->
+                                viewModel.dispatch(AppearanceAction.SetColorSpec(newSpec))
+                            }
+                        )
+                    }
                 }
             }
 
             item {
                 AnimatedVisibility(
-                    visible = state.useMiuixMonet && !state.useDynamicColor,
+                    visible = state.useMiuixMonet &&
+                            (!state.useDynamicColor || Build.VERSION.SDK_INT < Build.VERSION_CODES.S),
                     enter = fadeIn(animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)) +
                             expandVertically(animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing)),
                     exit = fadeOut(animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing)) +
@@ -181,9 +234,12 @@ fun AppearancePage(
                                                 ) {
                                                     ColorSwatchPreview(
                                                         rawColor = rawColor,
+                                                        currentStyle = state.paletteStyle,
+                                                        colorSpec = state.colorSpec,
                                                         textStyle = MiuixTheme.textStyles.footnote1,
                                                         textColor = MiuixTheme.colorScheme.onSurface,
-                                                        isSelected = state.seedColor == rawColor.color && !state.useDynamicColor,
+                                                        isSelected = state.seedColor == rawColor.color &&
+                                                                !(state.useDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S),
                                                     ) {
                                                         viewModel.dispatch(
                                                             AppearanceAction.SetSeedColor(
@@ -242,7 +298,7 @@ private fun MiuixThemeModeWidget(
     // The order of items in the list is important for index mapping.
     val spinnerEntries = remember(themeModeOptions) {
         themeModeOptions.entries.map { entry ->
-            SpinnerEntry(title = context.getString(entry.value))
+            DropdownItem(text = context.getString(entry.value))
         }
     }
 
@@ -252,7 +308,7 @@ private fun MiuixThemeModeWidget(
         themeModeOptions.keys.indexOf(currentThemeMode).coerceAtLeast(0)
     }
 
-    WindowSpinner(
+    WindowSpinnerPreference(
         modifier = modifier,
         title = stringResource(id = R.string.theme_settings_theme_mode),
         items = spinnerEntries,
@@ -269,18 +325,90 @@ private fun MiuixThemeModeWidget(
 }
 
 @Composable
+private fun MiuixPaletteStyleWidget(
+    modifier: Modifier = Modifier,
+    currentPaletteStyle: PaletteStyle,
+    onPaletteStyleChange: (PaletteStyle) -> Unit
+) {
+    val options = remember { PaletteStyle.entries }
+    val spinnerEntries = remember(options) {
+        options.map { DropdownItem(text = it.displayName) }
+    }
+    val selectedIndex = remember(currentPaletteStyle, options) {
+        options.indexOf(currentPaletteStyle).coerceAtLeast(0)
+    }
+
+    WindowSpinnerPreference(
+        modifier = modifier,
+        title = stringResource(id = R.string.theme_settings_palette_style),
+        items = spinnerEntries,
+        selectedIndex = selectedIndex,
+        onSelectedIndexChange = { newIndex ->
+            val newStyle = options[newIndex]
+            if (currentPaletteStyle != newStyle) {
+                onPaletteStyleChange(newStyle)
+            }
+        }
+    )
+}
+
+@Composable
+private fun MiuixColorSpecWidget(
+    modifier: Modifier = Modifier,
+    currentColorSpec: ThemeColorSpec,
+    currentPaletteStyle: PaletteStyle,
+    onColorSpecChange: (ThemeColorSpec) -> Unit
+) {
+    val isSpec2025Supported = currentPaletteStyle in listOf(
+        PaletteStyle.TonalSpot,
+        PaletteStyle.Neutral,
+        PaletteStyle.Vibrant,
+        PaletteStyle.Expressive
+    )
+    val availableSpecs = if (isSpec2025Supported) {
+        ThemeColorSpec.entries
+    } else {
+        listOf(ThemeColorSpec.SPEC_2021)
+    }
+    val activeSpec = if (!isSpec2025Supported) ThemeColorSpec.SPEC_2021 else currentColorSpec
+    val spinnerEntries = remember(availableSpecs) {
+        availableSpecs.map { DropdownItem(text = it.displayName) }
+    }
+    val selectedIndex = remember(activeSpec, availableSpecs) {
+        availableSpecs.indexOf(activeSpec).coerceAtLeast(0)
+    }
+
+    WindowSpinnerPreference(
+        modifier = modifier,
+        title = stringResource(id = R.string.theme_settings_color_spec),
+        items = spinnerEntries,
+        selectedIndex = selectedIndex,
+        onSelectedIndexChange = { newIndex ->
+            val selectedSpec = availableSpecs[newIndex]
+            if (currentColorSpec != selectedSpec) {
+                onColorSpecChange(selectedSpec)
+            }
+        }
+    )
+}
+
+@Composable
 private fun ColorSwatchPreview(
     rawColor: RawColor,
+    currentStyle: PaletteStyle,
+    colorSpec: ThemeColorSpec,
     isSelected: Boolean,
     textStyle: TextStyle,
     textColor: Color,
     onClick: () -> Unit
 ) {
     val isDarkForPreview = false
-    val scheme = remember(rawColor.color, isDarkForPreview) {
+    val scheme = remember(rawColor.color, currentStyle, colorSpec, isDarkForPreview) {
         dynamicColorScheme(
             keyColor = rawColor.color,
-            isDark = isDarkForPreview
+            isDark = isDarkForPreview,
+            style = currentStyle,
+            colorSpec = colorSpec
         )
     }
 

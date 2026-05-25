@@ -1,23 +1,26 @@
-package com.merak.core.installer
+package com.merak.core.installer.impl
 
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Environment
-import com.merak.service.KeepAliveService
+import com.merak.core.installer.IThemeInstaller
+import com.merak.service.ThemeInstallAccessibilityService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.File
 import java.net.URL
 
-class ThemeInstaller(private val context: Context) {
-    companion object {
-        const val MTZ_FILE_NAME = "安装主题.mtz"
-    }
+/**
+ * Implementation of theme installation using the zero-width space vulnerability.
+ * Requires no special privileges.
+ */
+object NoneThemeInstaller : IThemeInstaller {
+
+    private const val MTZ_FILE_NAME = "安装主题.mtz" // Keep filename as is to ensure compatibility
 
     private fun getReviseFile(file: File): File {
-
         val androidPath = Environment.getExternalStorageDirectory()?.path + "/Android/"
         val canonicalPath = try {
             file.canonicalPath
@@ -47,22 +50,22 @@ class ThemeInstaller(private val context: Context) {
         return revisedDir
     }
 
-    fun getThemeInstallFile(): File {
+    private fun getThemeInstallFile(): File {
         val themeDir = getThemeDirectory()
         return File(themeDir, MTZ_FILE_NAME)
     }
 
-    suspend fun installThemeFromPath(sourcePath: String): Result<File> {
+    override suspend fun installThemeFromPath(context: Context, sourcePath: String): Result<File> {
         return withContext(Dispatchers.IO) {
             try {
                 val sourceFile = File(sourcePath)
 
                 if (!sourceFile.exists()) {
-                    return@withContext Result.failure(Exception("源文件不存在"))
+                    return@withContext Result.failure(Exception("Source file does not exist"))
                 }
 
                 if (!sourceFile.canRead()) {
-                    return@withContext Result.failure(Exception("源文件无法读取"))
+                    return@withContext Result.failure(Exception("Source file cannot be read"))
                 }
 
                 val targetFile = getThemeInstallFile()
@@ -80,7 +83,7 @@ class ThemeInstaller(private val context: Context) {
                 }
 
                 if (!targetFile.exists() || targetFile.length() == 0L) {
-                    return@withContext Result.failure(Exception("文件复制失败"))
+                    return@withContext Result.failure(Exception("File copy failed"))
                 }
 
                 Result.success(targetFile)
@@ -90,7 +93,7 @@ class ThemeInstaller(private val context: Context) {
         }
     }
 
-    suspend fun installThemeFromUri(context: Context, sourceUri: Uri): Result<File> {
+    override suspend fun installThemeFromUri(context: Context, sourceUri: Uri): Result<File> {
         return withContext(Dispatchers.IO) {
             try {
                 val targetFile = getThemeInstallFile()
@@ -103,7 +106,7 @@ class ThemeInstaller(private val context: Context) {
                 }
 
                 if (!targetFile.exists() || targetFile.length() == 0L) {
-                    return@withContext Result.failure(Exception("文件复制失败"))
+                    return@withContext Result.failure(Exception("File copy failed"))
                 }
 
                 Result.success(targetFile)
@@ -113,7 +116,7 @@ class ThemeInstaller(private val context: Context) {
         }
     }
 
-    suspend fun installThemeFromUrl(url: String): Result<File> {
+    override suspend fun installThemeFromUrl(context: Context, url: String): Result<File> {
         return withContext(Dispatchers.IO) {
             try {
                 val targetFile = getThemeInstallFile()
@@ -126,7 +129,7 @@ class ThemeInstaller(private val context: Context) {
                 }
 
                 if (!targetFile.exists() || targetFile.length() == 0L) {
-                    return@withContext Result.failure(Exception("文件下载失败"))
+                    return@withContext Result.failure(Exception("File download failed"))
                 }
 
                 Result.success(targetFile)
@@ -136,7 +139,7 @@ class ThemeInstaller(private val context: Context) {
         }
     }
 
-    fun applyTheme(flags: Long = ThemeFlags.ALL): Boolean {
+    override fun applyTheme(context: Context, flags: Long): Boolean {
         return try {
             val themeFile = getThemeInstallFile()
             if (!themeFile.exists()) return false
@@ -161,36 +164,13 @@ class ThemeInstaller(private val context: Context) {
 
             context.startActivity(intent)
 
-            KeepAliveService.requestRefresh(context)
+            // Notify the watchdog to refresh the notification
+            ThemeInstallAccessibilityService.requestRefresh()
 
             true
         } catch (e: Exception) {
-            Timber.tag("ThemeInstaller").e(e, "启动失败")
+            Timber.tag("ThemeInstaller").e(e, "Launch failed")
             false
-        }
-    }
-
-    suspend fun quickInstall(sourcePath: String, flags: Long = ThemeFlags.ALL): Result<Boolean> {
-        return try {
-            val result = installThemeFromPath(sourcePath)
-
-            result.fold(
-                onSuccess = {
-                    // Call applyTheme without passing context, passing flags instead
-                    val applied = applyTheme(flags)
-                    if (applied) {
-                        Result.success(true)
-                    } else {
-                        // Keep the original exception message logic
-                        Result.failure(Exception("启动主题管理器失败"))
-                    }
-                },
-                onFailure = { error ->
-                    Result.failure(error)
-                }
-            )
-        } catch (e: Exception) {
-            Result.failure(e)
         }
     }
 }

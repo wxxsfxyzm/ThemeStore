@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -75,7 +76,7 @@ fun PermissionItem(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            Checkbox(checked = isChecked, onCheckedChange = null)
+            Checkbox(state = ToggleableState(value = isChecked), onClick = null)
         }
     }
 }

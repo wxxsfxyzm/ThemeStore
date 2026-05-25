@@ -52,7 +52,7 @@
         </activity>
         <activity
             android:name="com.merak.ui.activity.MtzInstallActivity"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:theme="@style/Theme.ThemeStore.Translucent"
             android:exported="true">
 
             <intent-filter>

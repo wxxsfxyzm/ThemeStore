@@ -1,23 +1,36 @@
 package com.merak.ui
 
 import android.widget.Toast
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavEntryDecorator
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberDecoratedNavEntries
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.scene.SceneInfo
+import androidx.navigation3.scene.SinglePaneSceneStrategy
+import androidx.navigation3.scene.rememberSceneState
+import androidx.navigation3.ui.NavDisplay
+import androidx.navigation3.ui.NavDisplayTransitionEffects
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.NavigationEventState
+import androidx.navigationevent.compose.rememberNavigationEventState
 import com.merak.ui.activity.MainUiState
 import com.merak.ui.activity.MainViewModel
+import com.merak.ui.navigation.MiuixPredictiveBackAnimation
 import com.merak.ui.page.AboutPage
 import com.merak.ui.page.FilePickerPage
 import com.merak.ui.page.InstallEvent
@@ -28,6 +41,7 @@ import com.merak.ui.page.home.log.LogPage
 import com.merak.ui.page.settings.theme.AppearancePage
 import com.merak.ui.page.welcome.WelcomePage
 import dev.chrisbanes.haze.HazeState
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -35,127 +49,161 @@ fun App(
     uiState: MainUiState,
     mainViewModel: MainViewModel
 ) {
-    // 1. 如果数据还没加载完（DataStore读取中），可以显示空白或Loading，避免闪烁
     if (!uiState.isLoaded) return
 
-    // 2. 状态提升：根据 DataStore 中的状态决定初始页面
-    val startDestination = remember {
-        if (uiState.showWelcome) Route.WELCOME else Route.MAIN
+    val startRoute = remember {
+        if (uiState.showWelcome) Route.Welcome else Route.Main
     }
-
-    val navController = rememberNavController()
+    val backStack = rememberNavBackStack(startRoute)
+    val navigator = remember(backStack) { Navigator(backStack) }
     val hazeState = if (uiState.useBlur) remember { HazeState() } else null
+    val predictiveBackAnimation = remember { MiuixPredictiveBackAnimation() }
 
-    NavHost(
-        navController = navController,
-        modifier = Modifier.fillMaxSize(),
-        startDestination = startDestination,
-        // 统一动画配置，避免重复代码
-        enterTransition = {
-            slideInHorizontally(
-                initialOffsetX = { it },
-                animationSpec = tween(500, easing = FastOutSlowInEasing)
-            )
-        },
-        exitTransition = {
-            slideOutHorizontally(
-                targetOffsetX = { -it / 5 },
-                animationSpec = tween(500, easing = FastOutSlowInEasing)
-            )
-        },
-        popEnterTransition = {
-            slideInHorizontally(
-                initialOffsetX = { -it / 5 },
-                animationSpec = tween(500, easing = FastOutSlowInEasing)
-            )
-        },
-        popExitTransition = {
-            slideOutHorizontally(
-                targetOffsetX = { it },
-                animationSpec = tween(500, easing = FastOutSlowInEasing)
-            )
-        }
-    ) {
-        // --- 欢迎/引导页 ---
-        composable(Route.WELCOME) {
-            val pagerState = rememberPagerState(
-                initialPage = uiState.initialWelcomePage,
-                pageCount = { 5 }
-            )
-
-            // 监听页码变化并保存到 DataStore
-            LaunchedEffect(pagerState) {
-                snapshotFlow { pagerState.currentPage }.collect { page ->
-                    mainViewModel.saveWelcomeProgress(page)
-                }
+    CompositionLocalProvider(LocalNavigator provides navigator) {
+        var gestureState: NavigationEventState<SceneInfo<NavKey>>? = null
+        val navigationScope = rememberCoroutineScope()
+        val onBack: (() -> Unit) -> Unit = { callback ->
+            navigationScope.launch {
+                callback()
+                navigator.pop()
             }
-
-            WelcomePage(
-                // 假设 WelcomePage 有回调，当点击"开始体验"时触发
-                onFinish = {
-                    mainViewModel.completeOnboarding() // 写 DataStore
-                    // 导航到主页并移除回退栈
-                    navController.navigate(Route.MAIN) {
-                        popUpTo(Route.WELCOME) { inclusive = true }
-                    }
-                },
-                pagerState = pagerState
-            )
         }
 
-        // --- 主页 ---
-        composable(Route.MAIN) {
-            MainPage(navController, hazeState)
-        }
-
-        // --- 主题安装页 ---
-        composable(Route.THEME_INSTALL) {
-            ThemeInstallPage(
-                onBack = { navController.popBackStack() },
-                onNavigateToFilePicker = { navController.navigate(Route.FILE_PICKER) }
-            )
-        }
-
-        // --- 文件选择页 (重构重点) ---
-        composable(Route.FILE_PICKER) {
-            val context = LocalContext.current
-            // 使用 Koin 注入专属的 ViewModel，将逻辑抽离出 UI
-            val installViewModel: ThemeInstallViewModel = koinViewModel()
-
-            // 监听 ViewModel 发出的事件 (Toast, 导航等)
-            LaunchedEffect(Unit) {
-                installViewModel.installEvent.collect { event ->
-                    when (event) {
-                        is InstallEvent.ShowToast -> {
-                            Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
-                        }
-
-                        is InstallEvent.NavigateBack -> {
-                            navController.popBackStack()
-                        }
+        val entries = rememberDecoratedNavEntries(
+            backStack = navigator.backStack,
+            entryDecorators = listOf(
+                rememberSaveableStateHolderNavEntryDecorator(),
+                rememberViewModelStoreNavEntryDecorator(),
+                NavEntryDecorator { content ->
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        content.Content()
                     }
                 }
-            }
+            ),
+            entryProvider = entryProvider {
+                entry<Route.Welcome> {
+                    val pagerState = rememberPagerState(
+                        initialPage = uiState.initialWelcomePage,
+                        pageCount = { 5 }
+                    )
 
-            FilePickerPage(
-                onBack = { navController.popBackStack() },
-                onFileSelected = { file, flags ->
-                    // 业务逻辑委托给 ViewModel
-                    installViewModel.installLocalTheme(context, file, flags)
+                    LaunchedEffect(pagerState) {
+                        snapshotFlow { pagerState.currentPage }.collect { page ->
+                            mainViewModel.saveWelcomeProgress(page)
+                        }
+                    }
+
+                    WelcomePage(
+                        onFinish = {
+                            mainViewModel.completeOnboarding()
+                            navigator.replaceAll(listOf(Route.Main))
+                        },
+                        pagerState = pagerState
+                    )
                 }
-            )
-        }
 
-        composable(Route.LOG) {
-            LogPage(onBack = { navController.popBackStack() })
-        }
+                entry<Route.Main> {
+                    MainPage(
+                        hazeState = hazeState,
+                        useFloatingBottomBar = uiState.useAppleFloatingBar
+                    )
+                }
 
-        composable(Route.ABOUT) {
-            AboutPage(onBack = { navController.popBackStack() })
-        }
+                entry<Route.ThemeInstall> {
+                    ThemeInstallPage(
+                        onBack = { navigator.pop() },
+                        onNavigateToFilePicker = { navigator.push(Route.FilePicker) }
+                    )
+                }
 
-        composable(Route.APPEARANCE) {
-            AppearancePage(navController)
-        }
+                entry<Route.FilePicker> {
+                    val context = LocalContext.current
+                    val installViewModel: ThemeInstallViewModel = koinViewModel()
+
+                    LaunchedEffect(Unit) {
+                        installViewModel.installEvent.collect { event ->
+                            when (event) {
+                                is InstallEvent.ShowToast -> {
+                                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                                }
+
+                                is InstallEvent.NavigateBack -> {
+                                    navigator.pop()
+                                }
+                            }
+                        }
+                    }
+
+                    FilePickerPage(
+                        onBack = { navigator.pop() },
+                        onFileSelected = { file, flags ->
+                            installViewModel.installLocalTheme(context, file, flags)
+                        }
+                    )
+                }
+
+                entry<Route.Log> {
+                    LogPage(onBack = { navigator.pop() })
+                }
+
+                entry<Route.About> {
+                    AboutPage(onBack = { navigator.pop() })
+                }
+
+                entry<Route.Appearance> {
+                    AppearancePage(
+                        onBack = { navigator.pop() },
+                        hazeState = hazeState
+                    )
+                }
+            }
+        )
+
+        val sceneState = rememberSceneState(
+            entries = entries,
+            sceneStrategies = listOf(SinglePaneSceneStrategy()),
+            sceneDecoratorStrategies = emptyList(),
+            sharedTransitionScope = null,
+            onBack = { onBack {} },
+        )
+        val scene = sceneState.currentScene
+        val currentInfo = SceneInfo(scene)
+        val previousSceneInfos = sceneState.previousScenes.map { SceneInfo(it) }
+        gestureState = rememberNavigationEventState(
+            currentInfo = currentInfo,
+            backInfo = previousSceneInfos
+        )
+
+        NavigationBackHandler(
+            state = gestureState,
+            isBackEnabled = scene.previousEntries.isNotEmpty(),
+            onBackCompleted = { callback -> onBack(callback) },
+            onBackCancelled = { callback -> callback() }
+        )
+
+        NavDisplay(
+            sceneState = sceneState,
+            navigationEventState = gestureState,
+            contentAlignment = Alignment.TopStart,
+            sizeTransform = null,
+            transitionEffects = NavDisplayTransitionEffects(
+                blockInputDuringTransition = true
+            ),
+            predictivePopTransitionSpec = { swipeEdge ->
+                with(predictiveBackAnimation) {
+                    onPredictivePopTransitionSpec(swipeEdge = swipeEdge)
+                }
+            },
+            popTransitionSpec = {
+                with(predictiveBackAnimation) {
+                    onPopTransitionSpec()
+                }
+            },
+            transitionSpec = {
+                with(predictiveBackAnimation) {
+                    onTransitionSpec()
+                }
+            }
+        )
     }
 }

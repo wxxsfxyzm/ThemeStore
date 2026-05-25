@@ -10,198 +10,185 @@ import android.content.IntentFilter
 import android.util.Base64
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityManager
+import com.merak.data.settings.repo.SettingsRepo
 import com.merak.util.timber.LogFormatter
 import com.merak.x.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-/**
- * Broadcast interceptor service.
- * Dynamically registers receiver to intercept MIUI scheduled broadcasts and prevent theme from reverting to default.
- */
 @SuppressLint("AccessibilityPolicy")
-class ThemeInstallAccessibilityService : AccessibilityService() {
+class ThemeInstallAccessibilityService : AccessibilityService(), KoinComponent {
+
+    private val settingsRepo: SettingsRepo by inject()
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     companion object {
         const val ACTION_SERVICE_UP = "com.merak.action_Service_UP"
         const val ACTION_SERVICE_DOWN = "com.merak.action_Service_DOWN"
-
-        // Log Tag, used for UI parsing
         private const val TAG = "ThemeAccessibility"
 
-        // "miui.intent.action.CHECK_TIME_UP"
         private val ALARM_ACTION = String(
             Base64.decode("bWl1aS5pbnRlbnQuYWN0aW9uLkNIRUNLX1RJTUVfVVA=", Base64.DEFAULT)
         )
 
-        @Volatile
-        private var isConnected = false
+        private val _isConnectedFlow = MutableStateFlow(false)
+        val isConnectedFlow = _isConnectedFlow.asStateFlow()
+
+        private val _interceptEventFlow = MutableStateFlow(0L)
+        val interceptEventFlow = _interceptEventFlow.asStateFlow()
+
+        private val _refreshEventFlow = MutableStateFlow(0L)
+        val refreshEventFlow = _refreshEventFlow.asStateFlow()
 
         @Volatile
         private var st_connectedTime = ""
-
         @Volatile
         private var st_receiveTime = ""
+        @Volatile
+        private var st_nextExpectedTime = ""
 
-        // Static method: Check if service is enabled
-        fun isAccessibilityServiceEnabled(
-            context: Context,
-            clazz: Class<out AccessibilityService>
-        ): Boolean {
-            val am = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as? AccessibilityManager
-                ?: return false
-
-            val enabledServices = am.getEnabledAccessibilityServiceList(
-                AccessibilityServiceInfo.FEEDBACK_ALL_MASK
-            )
-
+        fun isAccessibilityServiceEnabled(context: Context, clazz: Class<out AccessibilityService>): Boolean {
+            val am = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as? AccessibilityManager ?: return false
+            val enabledServices = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
             val myComponentName = "${context.packageName}/${clazz.name}"
-
             return enabledServices.any {
                 "${it.resolveInfo.serviceInfo.packageName}/${it.resolveInfo.serviceInfo.name}" == myComponentName
             }
         }
 
-        fun isConnected(): Boolean = isConnected
-        fun getConnectedTime(): String = st_connectedTime
-        fun getReceiveTime(): String = st_receiveTime
+        fun isConnected(): Boolean = _isConnectedFlow.value
+        fun requestRefresh() {
+            _refreshEventFlow.value = System.currentTimeMillis()
+        }
     }
 
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
 
-    // Dynamic broadcast receiver for external system intents only
     private val mBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent == null || context == null) return
-
-            if (intent.action == ALARM_ACTION) {
-                // Intercept broadcast to prevent system from reverting to default theme
-                // Wrapped in try-catch in case it's not an ordered broadcast in newer MIUI versions
-                try {
-                    abortBroadcast()
-                } catch (e: Exception) {
-                    Timber.tag(TAG).e(e, "Intercept failed | Broadcast might not be ordered")
-                }
-
-                val now = Date()
-                st_receiveTime = dateFormat.format(now)
-
-                // Use LogFormatter to record interception log
-                LogFormatter.logAlarmIntercept(
-                    title = context.getString(R.string.alarm_intercept_title),
-                    content = context.getString(R.string.alarm_intercept_content, ALARM_ACTION, st_receiveTime)
-                )
-
-                // Refresh KeepAliveService notification to show latest intercept count
-                KeepAliveService.requestRefresh(context.applicationContext)
+            if (intent?.action == ALARM_ACTION && context != null) {
+                handleAlarmIntercept(context)
             }
         }
-    }
 
-    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        // We don't need to handle specific accessibility events, just utilize the service lifecycle
-    }
+        private fun handleAlarmIntercept(context: Context) {
+            try {
+                abortBroadcast()
+            } catch (e: Exception) {
+                LogFormatter.logError("Intercept failed - Not an ordered broadcast?", e)
+            }
 
-    override fun onInterrupt() {
-        Timber.tag(TAG).w("Service status | Accessibility service interrupted by system")
-    }
+            val nowMillis = System.currentTimeMillis()
+            st_receiveTime = dateFormat.format(Date(nowMillis))
+            st_nextExpectedTime = context.getString(R.string.estimated_next_time, timeFormat.format(Date(nowMillis + 7_200_000L)))
 
-    override fun onServiceConnected() {
-        super.onServiceConnected()
-        Timber.tag(TAG).i("Service status | Accessibility service connected")
+            LogFormatter.logAlarmIntercept(
+                title = context.getString(R.string.alarm_intercept_title),
+                content = context.getString(R.string.alarm_intercept_content, ALARM_ACTION, st_receiveTime, st_nextExpectedTime)
+            )
 
-        // Configure service info programmatically to ensure flags are active
-        val info = AccessibilityServiceInfo().apply {
-            eventTypes = AccessibilityEvent.TYPES_ALL_MASK
-            feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
-            notificationTimeout = 100
-            flags = AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
-                    AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
+            _interceptEventFlow.value = System.currentTimeMillis()
         }
-        serviceInfo = info
-
-        KeepAliveService.requestRefresh(applicationContext)
-        sendServiceUpBroadcast()
     }
 
     override fun onCreate() {
         super.onCreate()
-        Timber.tag(TAG).d("Service lifecycle | onCreate - Service starting")
-
-        if (isConnected) {
-            Timber.tag(TAG).w("Service status | Service already connected, skipping initialization")
-            return
-        }
-
-        st_connectedTime = dateFormat.format(Date())
-
-        // Register high priority broadcast receiver for system intents
         val intentFilter = IntentFilter().apply {
             addAction(ALARM_ACTION)
-            // Optional: Listen to screen off to prevent being killed
-            addAction(Intent.ACTION_SCREEN_OFF)
             priority = IntentFilter.SYSTEM_HIGH_PRIORITY
         }
-
         try {
-            // Must use RECEIVER_EXPORTED to receive broadcasts from MIUI system packages
             registerReceiver(mBroadcastReceiver, intentFilter, Context.RECEIVER_EXPORTED)
         } catch (e: Exception) {
-            Timber.tag(TAG).e(e, "Registration failed | Broadcast receiver registration exception")
+            Timber.tag(TAG).e(e, "Receiver registration failed")
         }
+    }
 
-        isConnected = true
+    override fun onServiceConnected() {
+        super.onServiceConnected()
+        val info = AccessibilityServiceInfo().apply {
+            eventTypes = AccessibilityEvent.TYPES_ALL_MASK
+            feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
+            notificationTimeout = 100
+            flags = AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
+        }
+        serviceInfo = info
+
+        _isConnectedFlow.value = true
+        st_connectedTime = dateFormat.format(Date())
+
         sendServiceUpBroadcast()
+        startWatchdog()
     }
 
-    override fun onDestroy() {
-        Timber.tag(TAG).d("Service lifecycle | onDestroy - Service destroyed")
-
-        if (isConnected) {
-            try {
-                unregisterReceiver(mBroadcastReceiver)
-            } catch (e: Exception) {
-                // Ignore receiver not registered exception
+    /**
+     * The Watchdog Mechanism:
+     * Observes KeepAliveService's running state. If it drops to false (e.g., swiped from recents)
+     * but settings indicate it should be running, the Anchor brings it back to life.
+     */
+    private fun startWatchdog() {
+        serviceScope.launch {
+            combine(
+                settingsRepo.appSettings,
+                KeepAliveService.isRunningFlow
+            ) { settings, isNotificationRunning ->
+                Pair(settings.isKeepAliveEnabled, isNotificationRunning)
+            }.collectLatest { (isEnabled, isRunning) ->
+                if (isEnabled && !isRunning) {
+                    Timber.tag(TAG).w("Watchdog triggered | KeepAliveService is dead. Resurrecting...")
+                    // 1-second delay prevents BackgroundServiceStartNotAllowedException loops
+                    delay(1000L)
+                    KeepAliveService.start(applicationContext)
+                }
             }
-            isConnected = false
         }
-
-        serviceScope.cancel()
-        super.onDestroy()
     }
+
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) {}
+    override fun onInterrupt() {}
 
     override fun onUnbind(intent: Intent?): Boolean {
-        Timber.tag(TAG).d("Service lifecycle | onUnbind - Service unbound")
+        _isConnectedFlow.value = false
         sendServiceDownBroadcast()
         return super.onUnbind(intent)
     }
 
+    override fun onDestroy() {
+        _isConnectedFlow.value = false
+        try {
+            unregisterReceiver(mBroadcastReceiver)
+        } catch (e: Exception) {
+        }
+        serviceScope.cancel()
+        super.onDestroy()
+    }
+
     private fun sendServiceUpBroadcast() {
         try {
-            val intent = Intent(ACTION_SERVICE_UP).apply {
-                setPackage(packageName)
-            }
-            sendBroadcast(intent)
+            sendBroadcast(Intent(ACTION_SERVICE_UP).apply { setPackage(packageName) })
         } catch (e: Exception) {
-            Timber.tag(TAG).e(e, "Broadcast failed | ServiceUp broadcast exception")
         }
     }
 
     private fun sendServiceDownBroadcast() {
         try {
-            val intent = Intent(ACTION_SERVICE_DOWN).apply {
-                setPackage(packageName)
-            }
-            sendBroadcast(intent)
+            sendBroadcast(Intent(ACTION_SERVICE_DOWN).apply { setPackage(packageName) })
         } catch (e: Exception) {
-            Timber.tag(TAG).e(e, "Broadcast failed | ServiceDown broadcast exception")
         }
     }
 }

@@ -3,7 +3,7 @@ package com.merak.ui.page.home.log
 import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.merak.service.KeepAliveService
+import com.merak.service.ThemeInstallAccessibilityService
 import com.merak.util.timber.LogFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -16,7 +16,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-// 统计数据模型
+// Statistics data model
 data class LogStatistics(
     val totalCount: Int = 0,
     val totalSize: Long = 0,
@@ -33,11 +33,11 @@ data class LogUiState(
 )
 
 enum class LogTagType {
-    NORMAL,         // 普通 Debug/Info
-    THEME_INSTALL,  // 绿色：主题安装
-    ALARM_INTERCEPT,// 橙色：广播拦截
-    WARNING,        // 黄色：警告
-    ERROR           // 红色：错误/异常
+    NORMAL,         // Normal Debug/Info
+    THEME_INSTALL,  // Green: Theme installation
+    ALARM_INTERCEPT,// Orange: Broadcast interception
+    WARNING,        // Yellow: Warning
+    ERROR           // Red: Error/Exception
 }
 
 data class LogEntry(
@@ -47,7 +47,7 @@ data class LogEntry(
     val tagType: LogTagType,
     val title: String,
     val content: String,
-    val isExpanded: Boolean = false // 预留：点击展开堆栈
+    val isExpanded: Boolean = false // Reserved: Click to expand stack trace
 )
 
 class LogViewModel(
@@ -59,13 +59,13 @@ class LogViewModel(
 
     private val logDir by lazy { File(context.filesDir, "logs") }
 
-    // [列表用] 短时间格式: 02-09 12:22:08
+    // [For list] Short time format: 02-09 12:22:08
     private val displayDateFormat = SimpleDateFormat("MM-dd HH:mm:ss", Locale.getDefault())
 
-    // [统计卡片用] 长时间格式: 2026-02-09 12:22
+    // [For stats card] Long time format: 2026-02-09 12:22
     private val statsDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
 
-    // 匹配日志文件行首的时间戳: 2024-02-09 12:22:08.123
+    // Regex to match timestamp at the beginning of log file line: 2024-02-09 12:22:08.123
     private val timeRegex = Regex("^\\d{4}-\\d{2}-\\d{2}\\s\\d{2}:\\d{2}:\\d{2}\\.\\d{3}")
     private val logFileDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
 
@@ -88,7 +88,7 @@ class LogViewModel(
             return@withContext
         }
 
-        // 获取所有的日志文件，而不是只取 latestFile
+        // Get all log files instead of just the latestFile
         val files = logDir.listFiles { _, name -> name.endsWith(".log") } ?: emptyArray()
 
         if (files.isEmpty()) {
@@ -99,7 +99,7 @@ class LogViewModel(
         val allEntries = mutableListOf<LogEntry>()
         var totalSize = 0L
 
-        // 1. 遍历并解析所有日志文件
+        // 1. Traverse and parse all log files
         files.forEach { file ->
             totalSize += file.length()
             try {
@@ -121,7 +121,7 @@ class LogViewModel(
             }
         }
 
-        // 2. 将所有日志按时间戳进行升序排序 (旧的在前，新的在后)
+        // 2. Sort all logs by timestamp in ascending order (oldest first, newest last)
         allEntries.sortBy { it.rawTimestamp }
 
         var installCount = 0
@@ -129,7 +129,7 @@ class LogViewModel(
         var lastInstallTime = "-"
         var lastInterceptTime = "-"
 
-        // 3. 统计过程
+        // 3. Statistics process
         allEntries.forEach { entry ->
             if (entry.tagType == LogTagType.THEME_INSTALL) {
                 installCount++
@@ -140,7 +140,7 @@ class LogViewModel(
             }
         }
 
-        // 4. 列表倒序显示（最新的在最上面）
+        // 4. Display list in reverse order (newest on top)
         val reversedEntries = allEntries.reversed()
 
         _uiState.value = LogUiState(
@@ -148,7 +148,7 @@ class LogViewModel(
             isLoading = false,
             statistics = LogStatistics(
                 totalCount = allEntries.size,
-                totalSize = totalSize, // 所有日志文件的总大小
+                totalSize = totalSize, // Total size of all log files
                 installCount = installCount,
                 lastInstallTime = lastInstallTime,
                 interceptCount = interceptCount,
@@ -161,11 +161,12 @@ class LogViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             logDir.listFiles()?.forEach { it.delete() }
             refreshLogs()
-            KeepAliveService.requestRefresh(context)
+            // Dispatch a refresh signal to update notification stats
+            ThemeInstallAccessibilityService.requestRefresh()
         }
     }
 
-    // 辅助类，用于构建 LogEntry
+    // Helper class for building LogEntry
     private class LogEntryBuilder(
         val rawTimestamp: Long,
         val displayTime: String,
@@ -183,7 +184,7 @@ class LogViewModel(
 
     private fun parseLogHeader(line: String): LogEntryBuilder? {
         try {
-            // 格式: "2024-02-09 12:00:00.000 D/Tag: Title | Content"
+            // Format: "2024-02-09 12:00:00.000 D/Tag: Title | Content"
             val parts = line.split(" ", limit = 3)
             if (parts.size < 3) return null
 
@@ -201,29 +202,33 @@ class LogViewModel(
             val level = levelTag.substringBefore("/")
             val tag = levelTag.substringAfter("/")
 
-            // 1. 识别类型 (使用 LogFormatter 常量)
+            // 1. Identify type (using LogFormatter constants)
             val type = when (tag) {
                 LogFormatter.TAG_THEME_INSTALL -> LogTagType.THEME_INSTALL
                 LogFormatter.TAG_ALARM_INTERCEPT -> LogTagType.ALARM_INTERCEPT
-                LogFormatter.TAG_CRASH -> LogTagType.ERROR
+                LogFormatter.TAG_CRASH,
+                LogFormatter.TAG_ERROR -> LogTagType.ERROR
+
                 else -> {
-                    if (level == "E") LogTagType.ERROR
-                    else if (level == "W") LogTagType.WARNING
-                    else LogTagType.NORMAL
+                    when (level) {
+                        "E" -> LogTagType.ERROR
+                        "W" -> LogTagType.WARNING
+                        else -> LogTagType.NORMAL
+                    }
                 }
             }
 
-            // 2. 分离标题和内容 (使用 | 分隔符)
+            // 2. Separate title and content (using | separator)
             val (title, content) = if (messageBody.contains(" | ")) {
                 val splitMsg = messageBody.split(" | ", limit = 2)
                 splitMsg[0] to splitMsg[1]
             } else {
-                // 回退策略：如果没有分隔符，尝试换行符，或者全部作为标题/内容
+                // Fallback strategy: if there is no separator, try newline, or use all as title/content
                 if (messageBody.contains("\n")) {
                     val splitMsg = messageBody.split("\n", limit = 2)
                     splitMsg[0] to splitMsg[1]
                 } else {
-                    // 对于普通日志，全部作为标题显示
+                    // For normal logs, display everything as title
                     messageBody to ""
                 }
             }

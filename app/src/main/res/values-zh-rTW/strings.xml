@@ -8,10 +8,6 @@
     <string name="lang_zh_cn">简体中文</string>
     <string name="lang_zh_tw">繁體中文</string>
     <string name="lang_en">English</string>
-    <string name="color_mode">顏色模式</string>
-    <string name="color_system">跟隨系統</string>
-    <string name="color_light">淺色</string>
-    <string name="color_dark">深色</string>
     <string name="tab_local">本地</string>
     <string name="tab_online">線上</string>
     <string name="local_install_desc">從裝置儲存中選擇主題檔案進行安裝</string>
@@ -41,23 +37,23 @@
     <string name="copying_theme">正在複製主題...</string>
     <string name="theme_copied">主題檔案已複製</string>
     <string name="copy_failed">複製失敗</string>
-    <string name="download_started">開始下載主題...</string>
+    <string name="download_started">開始下載主題…</string>
     <string name="download_complete">下載完成</string>
     <string name="download_failed">下載失敗</string>
     <string name="input_url_hint">請輸入主題下載連結</string>
     <string name="theme_manager_not_found">啟動主題管理器失敗</string>
     <string name="empty_folder">此資料夾為空</string>
-    
+
     <!-- 無障礙服務 -->
     <string name="accessibility_service_label">ThemeStore</string>
     <string name="accessibility_service_description">依託無障礙服務動態註冊廣播接收器（優先級 1000），優先接收 MIUI 鬧鐘廣播和系統滅屏廣播。注意：普通廣播僅能優先接收，無法阻斷傳遞。運行在獨立進程中。</string>
-    
+
     <string name="home_accessibility_title">無障礙服務</string>
     <string name="home_accessibility_enabled_summary">已啟用，可自動攔截定時廣播</string>
     <string name="home_accessibility_disabled_summary">未啟用，點擊前往系統無障礙設定</string>
     <string name="home_accessibility_status_on">已連線</string>
     <string name="home_accessibility_status_off">未連線</string>
-    
+
     <!-- 日誌功能 -->
     <string name="home_tools_title">工具</string>
     <string name="log_title">日誌與統計</string>
@@ -75,10 +71,10 @@
     <string name="log_stat_entries">條</string>
     <string name="confirm">確定</string>
     <string name="cancel">取消</string>
-    
+
     <!-- Service -->
     <string name="receive_time_st">接收時間:</string>
-    
+
     <!-- LogManager -->
     <string name="log_file_not_found">日誌文件不存在</string>
     <string name="log_alarm_intercepted">MIUI 定時廣播已攔截</string>
@@ -89,7 +85,7 @@
     <string name="log_theme_install_failed">主題安裝失敗</string>
     <string name="log_file">文件:</string>
     <string name="log_size">大小:</string>
-    
+
     <!-- LogPage -->
     <string name="log_statistics_card_title">運行統計</string>
     <string name="log_total_count">日誌總數: %1$d 條</string>
@@ -99,28 +95,17 @@
     <string name="log_detail_file_size">文件大小</string>
     <string name="log_detail_size">大小</string>
     <string name="log_count_unit">次</string>
-    
+
     <!-- About -->
     <string name="about_title">關於</string>
     <string name="about_version_label">版本</string>
-    <string name="about_build_time_label">編譯時間</string>
-    <string name="about_contributors">開發者</string>
-    <string name="about_developer">開發者</string>
-    <string name="about_developer_avatar">開發者頭像</string>
-    <string name="about_feedback">反饋交流</string>
-    <string name="about_feedback_desc">加入QQ群反饋問題</string>
-    <string name="about_support">支持開發</string>
-    <string name="about_sponsor">贊助作者</string>
-    <string name="about_sponsor_summary">點這裡看看</string>
-    <string name="about_sponsor_toast">不用贊助我了，請自己去吃一頓好吃的吧</string>
+    <string name="about_blend_version">Blend %1$s (%2$s)</string>
     <string name="about_others">其他</string>
     <string name="about_github">GitHub</string>
     <string name="about_github_desc">查看項目源代碼</string>
-    <string name="about_qq_not_installed">請安裝QQ或更新QQ版本</string>
-    <string name="about_open_bilibili_failed">無法打開B站</string>
     <string name="about_open_failed">打開失敗</string>
     <string name="back">返回</string>
-    
+
     <!-- 常駐通知保活 -->
     <string name="keep_alive_title">常駐通知保活</string>
     <string name="keep_alive_summary">防止無障礙權限被關閉（優先保活子進程）</string>
@@ -129,14 +114,4 @@
     <string name="keep_alive_notification_title">ThemeStore 運行中</string>
     <string name="keep_alive_notification_content">安裝:%1$d次 | 攔截:%2$d次</string>
     <string name="keep_alive_notification_permission_required">請先授予通知權限才能開啟常駐通知保活</string>
-    
-    <!-- 優化模式 -->
-    <string name="optimization_mode_title">優化模式</string>
-    <string name="optimization_mode_summary">僅保活後台服務，節省內存和CPU（需要無障礙權限）</string>
-    <string name="optimization_mode_dialog_title">開啟優化模式</string>
-    <string name="optimization_mode_dialog_message">開啟後將自動關閉APP界面，僅保留後台服務運行。\n\n優點：\n• 節省 200-300MB 內存\n• 降低 CPU 占用\n• 核心功能不受影響\n\n如需重新打開APP或關閉優化模式，請點擊通知欄中的按鈕。\n\n確定開啟嗎？</string>
-    <string name="optimization_mode_notification_action">退出優化</string>
-    <string name="optimization_mode_enabled_toast">優化模式已啟用，APP 將在 2 秒後自動退出</string>
-    <string name="optimization_mode_disabled_toast">優化模式已關閉</string>
-    <string name="optimization_mode_require_accessibility">優化模式需要先開啟無障礙權限</string>
 </resources>

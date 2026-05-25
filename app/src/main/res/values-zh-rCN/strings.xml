@@ -8,10 +8,6 @@
     <string name="lang_zh_cn">简体中文</string>
     <string name="lang_zh_tw">繁體中文</string>
     <string name="lang_en">English</string>
-    <string name="color_mode">颜色模式</string>
-    <string name="color_system">跟随系统</string>
-    <string name="color_light">浅色</string>
-    <string name="color_dark">深色</string>
     <string name="tab_local">本地</string>
     <string name="tab_online">在线</string>
     <string name="local_install_desc">从设备存储中选择主题文件进行安装</string>
@@ -50,6 +46,7 @@
     <string name="empty_folder">此文件夹为空</string>
     <string name="confirm">确定</string>
     <string name="cancel">取消</string>
+    <string name="loading">加载中…</string>
 
     <!-- 无障碍服务 -->
     <string name="accessibility_service_label">ThemeStore</string>
@@ -60,6 +57,9 @@
     <string name="home_accessibility_disabled_summary">未开启，点击前往系统无障碍设置</string>
     <string name="home_accessibility_status_on">已连接</string>
     <string name="home_accessibility_status_off">未连接</string>
+    <string name="home_accessibility_status_running">%1$s - 保活服务正在运行</string>
+    <string name="home_accessibility_status_not_running">%1$s - 保活服务未运行</string>
+    <string name="estimated_next_time">预计 %1$s 左右</string>
 
     <!-- 日志功能 -->
     <string name="home_tools_title">工具</string>
@@ -77,7 +77,7 @@
     <string name="log_stat_never">从未</string>
     <string name="log_stat_entries">条</string>
     <string name="alarm_intercept_title">MIUI 定时广播已拦截</string>
-    <string name="alarm_intercept_content">操作行为: %1$s\n触发时间: %2$s</string>
+    <string name="alarm_intercept_content">操作行为: %1$s\n触发时间: %2$s\n预计下次广播：%3$s</string>
 
     <!-- Service -->
     <string name="receive_time_st">接收时间:</string>
@@ -105,24 +105,24 @@
     <string name="log_detail_size">大小</string>
     <string name="log_count_unit">次</string>
 
+
+    <!-- ThemeInstaller -->
+    <string name="theme_install_invalid_file_or_uri_scheme">无效的文件或不支持的协议</string>
+    <string name="theme_install_only_support_mtz">仅支持 MTZ 文件！</string>
+    <string name="theme_install_success">主题安装成功</string>
+    <string name="theme_install_failed">主题安装失败</string>
+    <string name="theme_install_source">来源：%1$s</string>
+    <string name="theme_install_request_sent">已发送主题应用请求</string>
+    <string name="theme_install_failed_starting_manager">启动主题管理器错误</string>
+    <string name="theme_install_failed_handle_file">处理文件失败：%1$s</string>
+
     <!-- About -->
     <string name="about_title">关于</string>
     <string name="about_version_label">版本</string>
-    <string name="about_build_time_label">编译时间</string>
-    <string name="about_contributors">开发者</string>
-    <string name="about_developer">开发者</string>
-    <string name="about_developer_avatar">开发者头像</string>
-    <string name="about_feedback">反馈交流</string>
-    <string name="about_feedback_desc">加入QQ群反馈问题</string>
-    <string name="about_support">支持开发</string>
-    <string name="about_sponsor">赞助作者</string>
-    <string name="about_sponsor_summary">点这里看看</string>
-    <string name="about_sponsor_toast">不用给我赞助了，请自己吃一顿好吃的吧</string>
+    <string name="about_blend_version">Blend %1$s (%2$s)</string>
     <string name="about_others">其他</string>
     <string name="about_github">GitHub</string>
     <string name="about_github_desc">查看项目源代码</string>
-    <string name="about_qq_not_installed">请安装QQ或更新QQ版本</string>
-    <string name="about_open_bilibili_failed">无法打开B站</string>
     <string name="about_open_failed">打开失败</string>
     <string name="back">返回</string>
 
@@ -134,16 +134,6 @@
     <string name="keep_alive_notification_title">ThemeStore 运行中</string>
     <string name="keep_alive_notification_content">安装:%1$d次 | 拦截:%2$d次</string>
     <string name="keep_alive_notification_permission_required">请先授予通知权限才能开启常驻通知保活</string>
-
-    <!-- 优化模式 -->
-    <string name="optimization_mode_title">优化模式</string>
-    <string name="optimization_mode_summary">仅保活后台服务，节省内存和CPU（需要无障碍权限）</string>
-    <string name="optimization_mode_dialog_title">开启优化模式</string>
-    <string name="optimization_mode_dialog_message">开启后将自动关闭APP界面，仅保留后台服务运行。\n\n优点：\n• 节省 200–300MB 内存\n• 降低 CPU 占用\n• 核心功能不受影响\n\n如需重新打开APP或关闭优化模式，请点击通知栏中的按钮。\n\n确定开启吗？</string>
-    <string name="optimization_mode_notification_action">退出优化</string>
-    <string name="optimization_mode_enabled_toast">优化模式已启用，APP 将在 2 秒后自动退出</string>
-    <string name="optimization_mode_disabled_toast">优化模式已关闭</string>
-    <string name="optimization_mode_require_accessibility">优化模式需要先开启无障碍权限</string>
 
     <string name="permission_shizuku_title">Shizuku 授权</string>
     <string name="permission_shizuku_desc">用于执行无需 Root 的高级系统操作</string>
@@ -164,6 +154,12 @@
     <string name="personalization">个性化</string>
     <string name="theme_settings">主题设置</string>
     <string name="theme_settings_desc">更改应用主题</string>
+    <string name="theme_settings_ui_style">界面样式</string>
+    <string name="theme_settings_miuix_ui">Miuix UI</string>
+    <string name="theme_settings_use_apple_floating_bar">启用悬浮底栏</string>
+    <string name="theme_settings_use_apple_floating_bar_desc">在屏幕底部使用悬浮样式的导航栏</string>
+    <string name="theme_settings_use_blur">启用模糊</string>
+    <string name="theme_settings_use_blur_desc">为应用启用模糊效果</string>
     <string name="theme_settings_miuix_custom_colors">自定义颜色</string>
     <string name="theme_settings_miuix_custom_colors_desc">在 Miuix 主题风格下自定义主题颜色</string>
     <string name="theme_settings_theme_mode">主题模式</string>
@@ -173,6 +169,7 @@
     <string name="theme_settings_theme_mode_system">跟随系统主题</string>
     <string name="theme_settings_palette_style">调色板样式</string>
     <string name="theme_settings_palette_style_desc">选择调色板样式</string>
+    <string name="theme_settings_color_spec">颜色规范</string>
     <string name="theme_settings_dynamic_color">动态颜色</string>
     <string name="theme_settings_dynamic_color_desc">基于壁纸的主题颜色</string>
     <string name="theme_settings_theme_color">主题颜色</string>

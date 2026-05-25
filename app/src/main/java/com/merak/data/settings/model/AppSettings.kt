@@ -1,6 +1,8 @@
 package com.merak.data.settings.model
 
-import com.merak.ui.theme.m3color.ThemeMode
+import com.merak.ui.theme.material.PaletteStyle
+import com.merak.ui.theme.material.ThemeColorSpec
+import com.merak.ui.theme.material.ThemeMode
 
 data class AppSettings(
     val isOnboardingCompleted: Boolean,
@@ -10,8 +12,11 @@ data class AppSettings(
     val themeMode: ThemeMode,
     val useDynamicColor: Boolean,
     val useMiuixMonet: Boolean,
+    val paletteStyle: PaletteStyle,
+    val colorSpec: ThemeColorSpec,
     val seedColor: Int,
     val useBlur: Boolean,
+    val useAppleFloatingBar: Boolean,
 
     // Settings
     val isKeepAliveEnabled: Boolean = false,

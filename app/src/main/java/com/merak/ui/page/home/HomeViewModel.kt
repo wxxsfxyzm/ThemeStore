@@ -42,7 +42,7 @@ data class HomeUiState(
 class HomeViewModel(
     private val context: Application,
     private val privilegedManager: PrivilegedManager,
-    private val autoAccessibilityManager: AutoAccessibilityManager // Injected manager
+    private val autoAccessibilityManager: AutoAccessibilityManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -54,20 +54,18 @@ class HomeViewModel(
     // Event 1: Listen for Shizuku permission grant
     private val shizukuPermissionListener = Shizuku.OnRequestPermissionResultListener { _, result ->
         if (result == PackageManager.PERMISSION_GRANTED) {
-            // "Listen" to the permission event: trigger auto-enable immediately
+            // Trigger auto-enable immediately upon permission grant
             autoAccessibilityManager.runCheck()
         }
         refreshState()
     }
 
-    // Event 2: Listen for service status (Broadcast from the service itself)
-    // Update receiver to handle both UP and DOWN events
+    // Event 2: Listen for service status
     private val serviceLifecycleReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
                 ThemeInstallAccessibilityService.ACTION_SERVICE_UP,
                 ThemeInstallAccessibilityService.ACTION_SERVICE_DOWN -> {
-                    // Refresh UI state regardless of whether the service started or stopped
                     refreshState()
                 }
             }
@@ -93,11 +91,14 @@ class HomeViewModel(
             filter,
             ContextCompat.RECEIVER_NOT_EXPORTED
         )
+
+        // Observe the running state of the KeepAliveService directly from its flow
         viewModelScope.launch {
-            com.merak.service.KeepAliveService.isRunning.collect { running ->
+            KeepAliveService.isRunningFlow.collect { running ->
                 _uiState.update { it.copy(isKeepAliveRunning = running) }
             }
         }
+
         // Event 3: Initialize Shizuku binder listener only when UI is active
         autoAccessibilityManager.init()
 
@@ -184,8 +185,8 @@ class HomeViewModel(
                 false
             }
 
-            // 核心修复：直接向系统查验该服务是否在运行队列中
-            val keepAliveRunning = KeepAliveService.isRunning(context)
+            // Sync KeepAlive status manually once for initialization
+            val keepAliveRunning = KeepAliveService.isRunningFlow.value
 
             // Update state flow to trigger UI recomposition
             _uiState.update { state ->
@@ -207,7 +208,6 @@ class HomeViewModel(
             // Ignore
         }
         try {
-            // Unregister the updated receiver
             context.unregisterReceiver(serviceLifecycleReceiver)
         } catch (e: Exception) {
             // Ignore

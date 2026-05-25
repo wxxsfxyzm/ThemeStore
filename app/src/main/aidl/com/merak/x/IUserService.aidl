@@ -16,5 +16,9 @@ interface IUserService {
 
     void setAppOpsMode(int code, int uid, String packageName, int mode) = 4;
 
+    ParcelFileDescriptor openRestrictedFile(String targetPath) = 5;
+
+    boolean startActivityPrivileged(in Intent intent) = 6;
+
     oneway void destroy() = 16777114;
 }

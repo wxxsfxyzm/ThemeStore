@@ -38,6 +38,7 @@ class FileLoggingTree(
     private val allowedReleaseTags = setOf(
         LogFormatter.TAG_THEME_INSTALL,
         LogFormatter.TAG_ALARM_INTERCEPT,
+        LogFormatter.TAG_ERROR,
         LogFormatter.TAG_CRASH
     )
 

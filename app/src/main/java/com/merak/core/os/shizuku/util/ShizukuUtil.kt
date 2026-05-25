@@ -2,14 +2,18 @@ package com.merak.core.os.shizuku.util
 
 // Update imports to the new ReflectManager location
 import android.annotation.SuppressLint
+import android.app.ActivityManager
+import android.app.IActivityManager
 import android.content.AttributionSource
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.pm.IPackageManager
 import android.content.pm.PackageManager
-import android.os.IBinder
 import android.os.Process
+import com.android.internal.app.IAppOpsService
 import com.merak.core.os.reflect.ReflectManager
-import com.merak.core.os.reflect.resolveSettingsSecureBinder
+import com.merak.core.os.reflect.getStaticValue
+import com.merak.core.os.reflect.getValue
 import com.merak.core.os.shizuku.exception.ShizukuNotWorkException
 import com.merak.x.BuildConfig
 import kotlinx.coroutines.channels.awaitClose
@@ -18,9 +22,9 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import rikka.shizuku.Shizuku
 import rikka.shizuku.ShizukuBinderWrapper
+import rikka.shizuku.SystemServiceHelper
 import rikka.sui.Sui
 import timber.log.Timber
-import java.lang.reflect.Field
 
 suspend fun <T> requireShizukuPermissionGranted(action: suspend () -> T): T {
     callbackFlow {
@@ -66,24 +70,72 @@ class ShizukuContext(base: Context) : ContextWrapper(base) {
 
 @SuppressLint("PrivateApi", "DiscouragedPrivateApi")
 class ShizukuHook(private val reflectManager: ReflectManager) {
+    companion object {
+        private const val TAG = "ShizukuHook"
+    }
 
-    val hookedSettingsBinder: IBinder? by lazy {
-        Timber.tag("ShizukuHook").d("Creating on-demand hooked Settings Binder...")
-        try {
-            val info = reflectManager.resolveSettingsSecureBinder() ?: return@lazy null
+    // 1. Hook ActivityManager
+    val hookedActivityManager: IActivityManager by lazy {
+        Timber.tag(TAG).d("Creating on-demand hooked IActivityManager...")
+        val amSingleton = reflectManager.getStaticValue<Any>("IActivityManagerSingleton", ActivityManager::class.java)
+            ?: throw NullPointerException("Failed to retrieve IActivityManagerSingleton")
+        val singletonClass = Class.forName("android.util.Singleton")
 
-            ShizukuBinderWrapper(info.originalBinder).also {
-                Timber.tag("ShizukuHook").i("On-demand hooked Settings Binder created.")
-            }
-        } catch (e: Exception) {
-            Timber.tag("ShizukuHook").e(e, "Failed to create hooked Settings Binder")
-            null
+        val originalAM = reflectManager.getValue<IActivityManager>(amSingleton, "mInstance", singletonClass)
+            ?: throw NullPointerException("Failed to retrieve mInstance from Singleton")
+
+        val wrapper = ShizukuBinderWrapper(originalAM.asBinder())
+        IActivityManager.Stub.asInterface(wrapper).also {
+            Timber.tag(TAG).i("On-demand hooked IActivityManager created.")
         }
     }
+
+    // 2. Hook PackageManager
+    val hookedPackageManager: IPackageManager by lazy {
+        Timber.tag(TAG).d("Creating on-demand hooked IPackageManager...")
+        val originalBinder = SystemServiceHelper.getSystemService("package")
+        val originalPM = IPackageManager.Stub.asInterface(originalBinder)
+
+        val wrapper = ShizukuBinderWrapper(originalPM.asBinder())
+        IPackageManager.Stub.asInterface(wrapper).also {
+            Timber.tag(TAG).i("On-demand hooked IPackageManager created.")
+        }
+    }
+
+    // 3. Hook AppOpsService
+    val hookedAppOpsService: IAppOpsService by lazy {
+        Timber.tag(TAG).d("Creating on-demand hooked IAppOpsService...")
+
+        val originalBinder = SystemServiceHelper.getSystemService(Context.APP_OPS_SERVICE)
+        val originalAppOps = IAppOpsService.Stub.asInterface(originalBinder)
+
+        val wrapper = ShizukuBinderWrapper(originalAppOps.asBinder())
+        IAppOpsService.Stub.asInterface(wrapper).also {
+            Timber.tag(TAG).i("On-demand hooked IAppOpsService created.")
+        }
+    }
+
+    // 4. Hook SettingsBinder
+    // BinderWrapper to SettingsBinder may lead to a crash on HyperOS due to system injection
+    // So we use shell command instead of BinderWrapper
+    /*    val hookedSettingsBinder: IBinder? by lazy {
+            Timber.tag(TAG).d("Creating on-demand hooked Settings Binder...")
+            try {
+                val info = reflectManager.resolveSettingsSecureBinder() ?: return@lazy null
+                ShizukuBinderWrapper(info.originalBinder).also {
+                    Timber.tag(TAG).i("On-demand hooked Settings Binder created.")
+                }
+            } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Failed to create hooked Settings Binder")
+                null
+            }
+        }
+    */
 }
 
+/*
 data class SettingsReflectionInfo(
     val provider: Any,
     val remoteField: Field,
     val originalBinder: IBinder
-)
+)*/

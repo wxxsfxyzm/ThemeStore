@@ -3,15 +3,16 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.agp.app)
-    /*    alias(libs.plugins.ksp)
-        alias(libs.plugins.room)*/
-    //alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.room)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.compose.compiler)
 }
 
 android {
     namespace = "com.merak.x"
-    compileSdk = 36
+    compileSdk = 37
+    compileSdkMinor = 0
     val keystorePropertiesFile = rootProject.file("keystore.properties")
     val keystoreProps = Properties().apply {
         load(FileInputStream(keystorePropertiesFile))
@@ -19,7 +20,7 @@ android {
     defaultConfig {
         applicationId = "com.merak.x"
         minSdk = 35
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
@@ -81,6 +82,17 @@ android {
         resources {
             excludes.add("/META-INF/{AL2.0,LGPL2.1}")
         }
+        jniLibs {
+            useLegacyPackaging = true
+            excludes += setOf(
+                "lib/*/libandroidx.graphics.path.so",
+                "lib/*/libdatastore_shared_counter.so"
+            )
+        }
+    }
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
     }
 }
 
@@ -88,12 +100,17 @@ kotlin {
     jvmToolchain(25)
 }
 
-/*room {
+room3 {
     // Specify the schema directory
     schemaDirectory("$projectDir/schemas")
-}*/
+}
+
+configurations.all {
+    exclude(group = "androidx.navigationevent", module = "navigationevent-compose")
+}
 
 dependencies {
+    compileOnly(project(":hidden-api"))
     implementation(libs.androidx.core)
     implementation(libs.androidx.lifecycle)
     implementation(libs.androidx.activity.compose)
@@ -104,17 +121,20 @@ dependencies {
     implementation(libs.compose.ui.graphics)
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
-    implementation(libs.compose.navigation)
+    implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.navigationevent) {
+        exclude(group = "androidx.navigation", module = "navigationevent-compose")
+    }
     implementation(libs.compose.materialIcons)
     // Preview support only for debug builds
     debugImplementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.test.manifest)
     debugImplementation(libs.compose.runtime.tracing)
 
-    //implementation(libs.room.runtime)
+    // implementation(libs.room.runtime)
     // ksp(libs.room.compiler)
-    //implementation(libs.room.ktx)
-    // implementation(libs.ktx.serializationJson)
+    implementation(libs.ktx.serializationJson)
 
     implementation(libs.hiddenapibypass)
 
@@ -133,13 +153,17 @@ dependencies {
     implementation(libs.timber)
 
     // miuix
-    implementation(libs.miuix)
+    implementation(libs.miuix.core)
+    implementation(libs.miuix.ui)
+    implementation(libs.miuix.blur)
+    implementation(libs.miuix.preference)
     implementation(libs.miuix.icons)
+    implementation(libs.miuix.navigation)
 
     // haze
     implementation(libs.haze)
     implementation(libs.haze.materials)
 
-    // m3color
-    implementation(libs.m3color)
+    // materialKolor
+    implementation(libs.materialKolor)
 }

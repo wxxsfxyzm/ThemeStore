@@ -1,4 +1,4 @@
-package com.merak.ui.theme.m3color
+package com.merak.ui.theme.material
 
 import androidx.compose.ui.graphics.Color
 

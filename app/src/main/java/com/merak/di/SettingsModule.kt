@@ -6,6 +6,9 @@ import com.merak.data.settings.local.AppDataStore
 import com.merak.data.settings.repo.SettingsRepo
 import com.merak.data.settings.repo.SettingsRepoImpl
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.module.dsl.bind
+import org.koin.core.module.dsl.singleOf
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 val settingsModule = module {
@@ -15,7 +18,12 @@ val settingsModule = module {
         }
     }
 
-    single { AppDataStore(get()) }
+    singleOf(::AppDataStore)
 
-    single<SettingsRepo> { SettingsRepoImpl(get()) }
+    single<SettingsRepo> {
+        SettingsRepoImpl(
+            dataStore = get(),
+            appScope = get(named("AppScope"))
+        )
+    }
 }

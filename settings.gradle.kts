@@ -33,5 +33,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "ThemeStore"
-include(":app")
+include(":app", ":hidden-api")
  

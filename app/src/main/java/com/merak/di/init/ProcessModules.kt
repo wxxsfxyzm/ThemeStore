@@ -1,5 +1,7 @@
 package com.merak.di.init
 
-import org.koin.core.module.Module
+import com.merak.di.reflectModule
 
-val processModules = listOf<Module>()
+val processModules = listOf(
+    reflectModule
+)

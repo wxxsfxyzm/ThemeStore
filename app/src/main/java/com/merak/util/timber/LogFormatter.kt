@@ -3,36 +3,65 @@ package com.merak.util.timber
 import timber.log.Timber
 
 /**
- * 统一日志格式化工具
- * 格式: [Tag] Title | Content
+ * Unified log formatting utility.
+ * Format: [Tag] Title | Content
  */
 object LogFormatter {
 
-    // 统计用的 Tag 标识
+    /** Tag for theme installation related logs. */
     const val TAG_THEME_INSTALL = "THEME_INSTALL"
+
+    /** Tag for alarm or broadcast interception logs. */
     const val TAG_ALARM_INTERCEPT = "ALARM_INTERCEPT"
+
+    /** General error tag. */
+    const val TAG_ERROR = "ERROR"
+
+    /** Critical crash tag. */
     const val TAG_CRASH = "CRASH"
 
     /**
-     * 记录主题安装日志
+     * Records theme installation logs.
+     *
+     * @param title The brief summary of the installation event.
+     * @param content Additional details regarding the installation.
      */
     fun logThemeInstall(title: String, content: String = "") {
-        // 输出格式: D/THEME_INSTALL: Title | Content
+        // Output format: I/THEME_INSTALL: Title | Content
         Timber.tag(TAG_THEME_INSTALL).i("$title | $content")
     }
 
     /**
-     * 记录广播拦截日志
+     * Records broadcast or alarm interception logs.
+     *
+     * @param title The action or component being intercepted.
+     * @param content Specific reasons or metadata for the interception.
      */
     fun logAlarmIntercept(title: String, content: String = "") {
         Timber.tag(TAG_ALARM_INTERCEPT).i("$title | $content")
     }
 
     /**
-     * 记录崩溃日志
+     * Records critical application crash logs.
+     *
+     * @param e The throwable representing the crash.
      */
     fun logCrash(e: Throwable) {
-        // 崩溃日志比较特殊，Timber 会自动处理堆栈
+        // Timber handles stack traces automatically when a Throwable is passed.
         Timber.tag(TAG_CRASH).e(e, "App Crash | ${e.message}")
+    }
+
+    /**
+     * Records general error logs with optional exception details.
+     *
+     * @param title Descriptive message about the error.
+     * @param e Optional [Throwable] for stack trace logging.
+     */
+    fun logError(title: String, e: Throwable? = null) {
+        if (e != null) {
+            Timber.tag(TAG_ERROR).e(e, "$title | ${e.message}")
+        } else {
+            Timber.tag(TAG_ERROR).e(title)
+        }
     }
 }

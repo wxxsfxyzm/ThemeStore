@@ -58,11 +58,11 @@ import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.TopAppBar
-import top.yukonga.miuix.kmp.extra.WindowDialog
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.PressFeedbackType
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
+import top.yukonga.miuix.kmp.window.WindowDialog
 
 @Composable
 fun LogPage(
@@ -79,7 +79,7 @@ fun LogPage(
     WindowDialog(
         title = stringResource(R.string.log_clear_confirm_title),
         summary = stringResource(R.string.log_clear_confirm_message),
-        show = showClearDialog,
+        show = showClearDialog.value,
         onDismissRequest = { showClearDialog.value = false }
     ) {
         Row(
@@ -161,7 +161,7 @@ fun LogPage(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = if (uiState.isLoading) "Loading..." else stringResource(R.string.log_empty),
+                            text = if (uiState.isLoading) stringResource(R.string.loading) else stringResource(R.string.log_empty),
                             color = colors.infoText
                         )
                     }
@@ -199,14 +199,14 @@ fun StatisticsSection(stats: LogStatistics) {
             ) {
                 Column {
                     Text(
-                        text = "运行统计",
+                        text = stringResource(R.string.log_statistics_card_title),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = MiuixTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "日志总数: ${stats.totalCount} 条",
+                        text = stringResource(R.string.log_total_count, stats.totalCount),
                         fontSize = 12.sp,
                         color = colors.infoText
                     )
@@ -221,7 +221,7 @@ fun StatisticsSection(stats: LogStatistics) {
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "日志大小",
+                        text = stringResource(R.string.log_file_size_label),
                         fontSize = 12.sp,
                         color = colors.infoText
                     )
@@ -238,7 +238,7 @@ fun StatisticsSection(stats: LogStatistics) {
                 // Theme installation statistics
                 StatItemCard(
                     modifier = Modifier.weight(1f),
-                    title = "主题安装",
+                    title = stringResource(R.string.log_label_theme_install),
                     count = stats.installCount,
                     time = stats.lastInstallTime,
                     bgColor = colors.successBg,
@@ -248,7 +248,7 @@ fun StatisticsSection(stats: LogStatistics) {
                 // Broadcast intercept statistics
                 StatItemCard(
                     modifier = Modifier.weight(1f),
-                    title = "广播拦截",
+                    title = stringResource(R.string.log_label_alarm_intercept),
                     count = stats.interceptCount,
                     time = stats.lastInterceptTime,
                     bgColor = colors.warningBg,
@@ -295,7 +295,7 @@ fun StatItemCard(
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "次",
+                text = stringResource(R.string.log_count_unit),
                 fontSize = 10.sp,
                 color = colors.infoText
             )
@@ -421,7 +421,7 @@ fun LogDetailDialog(
 
     WindowDialog(
         title = log.title.ifEmpty { "日志详情" },
-        show = showState,
+        show = showState.value,
         onDismissRequest = { onDismiss() }
     ) {
         Column {

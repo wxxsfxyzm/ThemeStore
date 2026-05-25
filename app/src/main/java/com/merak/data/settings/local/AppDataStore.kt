@@ -13,15 +13,20 @@ class AppDataStore(
     private val dataStore: DataStore<Preferences>,
     // private val json: Json
 ) {
+    val data: Flow<Preferences> = dataStore.data
+
     companion object {
         val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
         val WELCOME_PAGE_INDEX = intPreferencesKey("welcome_page_index")
 
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val THEME_USE_DYNAMIC_COLOR = booleanPreferencesKey("theme_use_dynamic_color")
+        val THEME_PALETTE_STYLE = stringPreferencesKey("theme_palette_style")
+        val THEME_COLOR_SPEC = stringPreferencesKey("theme_color_spec")
         val THEME_SEED_COLOR = intPreferencesKey("theme_seed_color")
         val UI_USE_MIUIX_MONET = booleanPreferencesKey("ui_use_miui_x_monet")
         val UI_USE_BLUR = booleanPreferencesKey("ui_use_blur")
+        val UI_USE_APPLE_FLOATING_BAR = booleanPreferencesKey("ui_use_apple_floating_bar")
 
         val KEEP_ALIVE_ENABLED = booleanPreferencesKey("keep_alive_enabled")
         val OPTIMIZATION_MODE_ENABLED = booleanPreferencesKey("optimization_mode_enabled")

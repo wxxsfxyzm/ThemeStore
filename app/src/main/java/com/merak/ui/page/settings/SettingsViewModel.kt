@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.merak.data.settings.repo.SettingsRepo
 import com.merak.service.KeepAliveService
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -24,6 +25,10 @@ class SettingsViewModel(
     fun toggleKeepAlive(enabled: Boolean) {
         viewModelScope.launch {
             settingsRepo.setKeepAliveEnabled(enabled)
+
+            // Wait for the Flow to emit the updated state before starting or stopping the service.
+            // This prevents the service from reading stale configuration and mistakenly killing itself.
+            settingsRepo.appSettings.first { it.isKeepAliveEnabled == enabled }
 
             if (!enabled) {
                 KeepAliveService.stop(context)

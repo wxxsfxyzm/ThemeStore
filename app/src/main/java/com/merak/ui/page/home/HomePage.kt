@@ -2,7 +2,6 @@ package com.merak.ui.page.home
 
 import android.content.Intent
 import android.provider.Settings
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -18,7 +17,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -35,12 +33,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
-import androidx.navigation.NavController
-import com.merak.ui.Route
 import com.merak.ui.components.OnLifecycleEvent
 import com.merak.ui.theme.getMiuixAppBarColor
 import com.merak.ui.theme.rememberMiuixHazeStyle
 import com.merak.ui.theme.tsHazeEffect
+import com.merak.util.toast
 import com.merak.x.R
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
@@ -51,15 +48,17 @@ import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.SmallTitle
+import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TopAppBar
-import top.yukonga.miuix.kmp.extra.SuperArrow
+import top.yukonga.miuix.kmp.preference.ArrowPreference as SuperArrow
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 
 @Composable
 fun HomePage(
-    navController: NavController,
+    onNavigateToThemeInstall: () -> Unit,
+    onNavigateToLog: () -> Unit,
     viewModel: HomeViewModel = koinViewModel(),
     hazeState: HazeState?,
     outerPadding: PaddingValues = PaddingValues(0.dp)
@@ -75,30 +74,29 @@ fun HomePage(
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
-            // ... (保持原有的 effect 收集逻辑完全不变)
             when (effect) {
                 is HomeSideEffect.OpenAccessibilitySettings -> {
                     val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
                     try {
                         context.startActivity(intent)
                     } catch (e: Exception) {
-                        Toast.makeText(context, context.getString(R.string.about_open_failed), Toast.LENGTH_SHORT).show()
+                        context.toast(R.string.about_open_failed)
                     }
                 }
 
-                is HomeSideEffect.ShowToast -> Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
-                is HomeSideEffect.ShowToastRes -> Toast.makeText(context, context.getString(effect.resId), Toast.LENGTH_SHORT).show()
+                is HomeSideEffect.ShowToast -> context.toast(effect.message)
+                is HomeSideEffect.ShowToastRes -> context.toast(effect.resId)
                 is HomeSideEffect.OpenShizukuManager -> {
                     val intent = context.packageManager.getLaunchIntentForPackage("moe.shizuku.privileged.api")
                     if (intent != null) context.startActivity(intent)
-                    else Toast.makeText(context, context.getString(R.string.shizuku_not_installed), Toast.LENGTH_SHORT).show()
+                    else context.toast(R.string.shizuku_not_installed)
                 }
 
                 is HomeSideEffect.RequestShizukuPermission -> {
                     try {
                         Shizuku.requestPermission(effect.requestCode)
                     } catch (e: Exception) {
-                        Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                        context.toast("Error: ${e.message}")
                     }
                 }
             }
@@ -135,14 +133,19 @@ fun HomePage(
                 val isAccEnabled = uiState.isAccessibilityEnabled
                 val isKeepAlive = uiState.isKeepAliveRunning
 
-                // 核心改动：细分描述文本的逻辑
                 val accDescription = when {
                     !isAccEnabled -> stringResource(R.string.home_accessibility_status_off)
-                    isKeepAlive -> "${stringResource(R.string.home_accessibility_status_on)} - 保活服务正在运行"
-                    else -> "${stringResource(R.string.home_accessibility_status_on)} - 保活服务未运行"
+                    isKeepAlive -> stringResource(
+                        R.string.home_accessibility_status_running,
+                        stringResource(R.string.home_accessibility_status_on)
+                    )
+
+                    else -> stringResource(
+                        R.string.home_accessibility_status_not_running,
+                        stringResource(R.string.home_accessibility_status_on)
+                    )
                 }
 
-                // 核心改动：细分描述文本的颜色
                 val accDescColor = when {
                     !isAccEnabled -> Color(0xFFD32F2F)
                     isKeepAlive -> Color(0xFF2E7D32)
@@ -178,7 +181,6 @@ fun HomePage(
                 )
             }
 
-            // ... (保持后面的 Theme Install 和 Tools Section 代码不变)
             item { SmallTitle(stringResource(R.string.home_install_title)) }
             item {
                 Card(
@@ -190,7 +192,7 @@ fun HomePage(
                     SuperArrow(
                         title = stringResource(R.string.home_install_title),
                         summary = stringResource(R.string.home_install_summary),
-                        onClick = { navController.navigate(Route.THEME_INSTALL) }
+                        onClick = onNavigateToThemeInstall
                     )
                 }
             }
@@ -206,7 +208,7 @@ fun HomePage(
                     SuperArrow(
                         title = stringResource(R.string.log_title),
                         summary = stringResource(R.string.log_summary),
-                        onClick = { navController.navigate(Route.LOG) }
+                        onClick = onNavigateToLog
                     )
                 }
             }
@@ -214,11 +216,6 @@ fun HomePage(
     }
 }
 
-/**
- * 重构后的 StatusCard 组件
- * 将 isEnabled 仅用于控制卡片主色调（背景、图标、状态圆角标）
- * 将 description 和 descriptionColor 完全开放以实现自定义文本层
- */
 @Composable
 private fun StatusCard(
     icon: Painter,
@@ -228,7 +225,6 @@ private fun StatusCard(
     descriptionColor: Color,
     onClick: () -> Unit
 ) {
-    // 决定卡片的“底层情绪颜色”：运行就是绿，没运行就是红
     val statusColor = if (isEnabled) Color(0xFF2E7D32) else Color(0xFFD32F2F)
     val backgroundColor = statusColor.copy(alpha = 0.1f)
 
@@ -240,7 +236,7 @@ private fun StatusCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(backgroundColor) // 背景颜色
+                .background(backgroundColor)
                 .clickable(onClick = onClick)
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -249,7 +245,7 @@ private fun StatusCard(
             Icon(
                 painter = icon,
                 contentDescription = null,
-                tint = statusColor, // 图标颜色跟随状态
+                tint = statusColor,
                 modifier = Modifier.size(24.dp)
             )
 
@@ -260,13 +256,13 @@ private fun StatusCard(
                     text = title,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
-                    color = MiuixTheme.colorScheme.onSurface // 修复：标题颜色应该始终是表面文本色
+                    color = MiuixTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = description, // 使用传入的描述
+                    text = description,
                     fontSize = 13.sp,
-                    color = descriptionColor // 使用传入的具体颜色判定
+                    color = descriptionColor
                 )
             }
 
@@ -281,7 +277,7 @@ private fun StatusCard(
             ) {
                 Text(
                     text = if (isEnabled) stringResource(R.string.status_on) else stringResource(R.string.status_off),
-                    color = statusColor, // Pill 标签文字跟随状态
+                    color = statusColor,
                     fontWeight = FontWeight.Bold,
                     fontSize = 11.sp
                 )

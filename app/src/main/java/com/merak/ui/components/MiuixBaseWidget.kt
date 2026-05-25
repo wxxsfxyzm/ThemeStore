@@ -3,11 +3,13 @@ package com.merak.ui.components
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.state.ToggleableState
 import top.yukonga.miuix.kmp.basic.BasicComponent
 import top.yukonga.miuix.kmp.basic.BasicComponentDefaults
 import top.yukonga.miuix.kmp.basic.Checkbox
+import top.yukonga.miuix.kmp.basic.CheckboxDefaults
 import top.yukonga.miuix.kmp.basic.Switch
-import top.yukonga.miuix.kmp.extra.SuperArrow
+import top.yukonga.miuix.kmp.preference.ArrowPreference
 
 @Composable
 fun MiuixSwitchWidget(
@@ -69,8 +71,9 @@ fun MiuixCheckboxWidget(
         onClick = toggleAction,
         endActions = {
             Checkbox(
-                checked = checked,
-                onCheckedChange = onCheckedChange,
+                state = ToggleableState(value = checked),
+                onClick = { onCheckedChange(!checked) },
+                colors = CheckboxDefaults.checkboxColors(),
                 enabled = enabled
             )
         }
@@ -95,7 +98,7 @@ fun MiuixNavigationItemWidget(
     onClick: () -> Unit
 ) {
     // Call the BaseWidget and pass the parameters accordingly.
-    SuperArrow(
+    ArrowPreference(
         title = title,
         summary = description,
         insideMargin = insideMargin,

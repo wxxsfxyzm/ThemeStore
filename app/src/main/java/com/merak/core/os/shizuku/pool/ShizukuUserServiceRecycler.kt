@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.ServiceConnection
 import android.os.IBinder
+import android.os.ParcelFileDescriptor
 import androidx.annotation.Keep
 import com.merak.core.os.shizuku.service.PrivilegedService
 import com.merak.core.os.shizuku.service.UserService
@@ -29,7 +30,19 @@ object ShizukuUserServiceRecycler :
     class UserServiceProxy(val service: IUserService) : UserService {
         override val privileged: IUserService = service
 
-        override fun close() = service.destroy()
+        override fun close() {
+            val binder = service.asBinder()
+            // Check if the binder is still alive to prevent DeadObjectException
+            // when this close method is triggered by the linkToDeath callback.
+            if (binder != null && binder.isBinderAlive) {
+                try {
+                    service.destroy()
+                } catch (_: Exception) {
+                    // Ignore expected exceptions such as DeadObjectException
+                    // that may occur due to race conditions during process death.
+                }
+            }
+        }
     }
 
     class ShizukuUserService @Keep constructor(context: Context) : IUserService.Stub() {
@@ -53,6 +66,12 @@ object ShizukuUserServiceRecycler :
 
         override fun setAppOpsMode(code: Int, uid: Int, packageName: String, mode: Int) =
             privileged.setAppOpsMode(code, uid, packageName, mode)
+
+        override fun openRestrictedFile(targetPath: String): ParcelFileDescriptor =
+            privileged.openRestrictedFile(targetPath)
+
+        override fun startActivityPrivileged(intent: android.content.Intent): Boolean =
+            privileged.startActivityPrivileged(intent)
 
         override fun destroy() {
             exitProcess(0)

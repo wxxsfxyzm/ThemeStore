@@ -7,16 +7,15 @@ import com.merak.ui.page.home.log.LogViewModel
 import com.merak.ui.page.settings.SettingsViewModel
 import com.merak.ui.page.settings.theme.AppearanceViewModel
 import com.merak.ui.page.welcome.WelcomeViewModel
-import org.koin.android.ext.koin.androidApplication
-import org.koin.core.module.dsl.viewModel
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 val viewModelModule = module {
-    viewModel { WelcomeViewModel(androidApplication(), get()) }
-    viewModel { MainViewModel(get()) }
-    viewModel { HomeViewModel(androidApplication(), get(), get()) }
-    viewModel { LogViewModel(androidApplication()) }
-    viewModel { SettingsViewModel(androidApplication(), get()) }
-    viewModel { AppearanceViewModel(get()) }
-    viewModel { ThemeInstallViewModel(get()) }
+    viewModelOf(::WelcomeViewModel)
+    viewModelOf(::MainViewModel)
+    viewModelOf(::HomeViewModel)
+    viewModelOf(::LogViewModel)
+    viewModelOf(::SettingsViewModel)
+    viewModelOf(::AppearanceViewModel)
+    viewModelOf(::ThemeInstallViewModel)
 }

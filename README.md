@@ -1,12 +1,14 @@
 # ThemeStore
 
-**ThemeStoreX** 是 **ThemeStore** 的 fork 版本，致力于优化原项目混乱的 UI 和代码架构，同时也用于测试新的项目架构，个人学习用。
+**ThemeStoreX** 是 **ThemeStore** 的 fork 版本，致力于优化原项目混乱的 UI 和代码架构，供个人学习用。
 
 ---
 
 ## 项目简介
 
 ThemeStoreX 仅支持 Android 16（我只有安卓16的小米设备）。
+
+目标：精简，稳定，但是功能强大
 
 ---
 

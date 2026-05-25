@@ -30,8 +30,8 @@ import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
-import top.yukonga.miuix.kmp.extra.WindowDialog
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.window.WindowDialog
 
 @Composable
 fun MtzInstallDialog(
@@ -53,7 +53,7 @@ fun MtzInstallDialog(
 
     WindowDialog(
         title = "安装选项",
-        show = showDialog,
+        show = showDialog.value,
         onDismissRequest = {
             showDialog.value = false
             onDismissRequest()

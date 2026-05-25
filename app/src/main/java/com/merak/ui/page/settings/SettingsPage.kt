@@ -2,13 +2,6 @@ package com.merak.ui.page.settings
 
 import android.Manifest
 import android.content.pm.PackageManager
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,9 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import androidx.navigation.NavController
 import com.merak.service.ThemeInstallAccessibilityService
-import com.merak.ui.Route
 import com.merak.ui.components.MiuixNavigationItemWidget
 import com.merak.ui.theme.getMiuixAppBarColor
 import com.merak.ui.theme.rememberMiuixHazeStyle
@@ -44,14 +35,15 @@ import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.basic.rememberTopAppBarState
-import top.yukonga.miuix.kmp.extra.SuperArrow
-import top.yukonga.miuix.kmp.extra.SuperSwitch
+import top.yukonga.miuix.kmp.preference.ArrowPreference as SuperArrow
+import top.yukonga.miuix.kmp.preference.SwitchPreference as SuperSwitch
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 
 @Composable
 fun SettingsPage(
-    navController: NavController,
+    onNavigateToAppearance: () -> Unit,
+    onNavigateToAbout: () -> Unit,
     viewModel: SettingsViewModel = koinViewModel(),
     hazeState: HazeState?,
     outerPadding: PaddingValues = PaddingValues(0.dp)
@@ -116,9 +108,7 @@ fun SettingsPage(
                     MiuixNavigationItemWidget(
                         title = stringResource(R.string.theme_settings),
                         description = stringResource(R.string.theme_settings_desc),
-                        onClick = {
-                            navController.navigate(Route.APPEARANCE)
-                        }
+                        onClick = onNavigateToAppearance
                     )
                 }
             }
@@ -149,32 +139,6 @@ fun SettingsPage(
                             }
                         }
                     )
-                    AnimatedVisibility(
-                        visible = settings.isKeepAliveEnabled,
-                        enter = fadeIn(animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)) +
-                                expandVertically(animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing)),
-                        exit = fadeOut(animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing)) +
-                                shrinkVertically(animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing))
-                    ) {
-                        SuperSwitch(
-                            title = stringResource(R.string.optimization_mode_title),
-                            summary = stringResource(R.string.optimization_mode_summary),
-                            checked = settings.isOptimizationModeEnabled,
-                            onCheckedChange = { checked ->
-                                if (checked) {
-                                    // 开启前检查无障碍
-                                    if (!isAccessibilityEnabled()) {
-                                        context.toast(R.string.optimization_mode_require_accessibility)
-                                    } else {
-                                        showOptimizationDialog.value = true
-                                    }
-                                } else {
-                                    // 直接关闭
-                                    context.toast(R.string.optimization_mode_disabled_toast)
-                                }
-                            }
-                        )
-                    }
                 }
             }
 
@@ -191,7 +155,7 @@ fun SettingsPage(
                     SuperArrow(
                         title = stringResource(R.string.about_title),
                         summary = stringResource(R.string.about_version_label), // 如果需要版本号，可以用 BuildConfig.VERSION_NAME
-                        onClick = { navController.navigate(Route.ABOUT) }
+                        onClick = onNavigateToAbout
                     )
                 }
             }

@@ -3,8 +3,12 @@ package com.merak.core.os.shizuku
 import android.Manifest
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
+import android.os.ParcelFileDescriptor
 import com.merak.core.os.shizuku.util.useShizukuUserService
 import com.merak.service.ThemeInstallAccessibilityService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import rikka.shizuku.ShizukuProvider
 import timber.log.Timber
 import android.os.Process as AndroidProcess
@@ -80,5 +84,34 @@ class PrivilegedManager(private val context: Context) {
         } catch (e: Exception) {
             Timber.e(e, "Failed to get package uid")
         }
+    }
+
+    /**
+     * Request a writable file descriptor from the Shizuku process
+     */
+    suspend fun openRestrictedTargetFile(targetPath: String): ParcelFileDescriptor? {
+        return withContext(Dispatchers.IO) {
+            var pfd: ParcelFileDescriptor? = null
+            // We use the default UserService (remote process) for file operations
+            useShizukuUserService { userService ->
+                pfd = userService.privileged.openRestrictedFile(targetPath)
+            }
+            pfd
+        }
+    }
+
+    /**
+     * Start an activity privileged via IPC
+     */
+    fun startActivityPrivileged(intent: Intent): Boolean {
+        var success = false
+        useShizukuUserService(true) { userService ->
+            try {
+                success = userService.privileged.startActivityPrivileged(intent)
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to start activity privileged via IPC")
+            }
+        }
+        return success
     }
 }

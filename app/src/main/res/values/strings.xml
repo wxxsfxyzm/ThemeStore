@@ -8,10 +8,6 @@
     <string name="lang_zh_cn">Chinese Simplified</string>
     <string name="lang_zh_tw">Chinese Traditional</string>
     <string name="lang_en">English</string>
-    <string name="color_mode">Color Mode</string>
-    <string name="color_system">Follow System</string>
-    <string name="color_light">Light</string>
-    <string name="color_dark">Dark</string>
     <string name="tab_local">Local</string>
     <string name="tab_online">Online</string>
     <string name="local_install_desc">Select theme file from device storage to install</string>
@@ -48,6 +44,9 @@
     <string name="input_url_hint">Please enter theme download URL</string>
     <string name="theme_manager_not_found">Failed to launch Theme Manager</string>
     <string name="empty_folder">This folder is empty</string>
+    <string name="confirm">Confirm</string>
+    <string name="cancel">Cancel</string>
+    <string name="loading">Loading…</string>
 
     <!-- Accessibility Service -->
     <string name="accessibility_service_label">ThemeStore</string>
@@ -57,6 +56,9 @@
     <string name="home_accessibility_disabled_summary">Disabled – tap to open system accessibility settings</string>
     <string name="home_accessibility_status_on">Connected</string>
     <string name="home_accessibility_status_off">Not connected</string>
+    <string name="home_accessibility_status_running">%1$s - Keep-alive service is running</string>
+    <string name="home_accessibility_status_not_running">%1$s - Keep-alive service is not running</string>
+    <string name="estimated_next_time">Estimated around %1$s</string>
 
     <!-- Log Function -->
     <string name="home_tools_title">Tools</string>
@@ -73,10 +75,8 @@
     <string name="log_stat_times">times</string>
     <string name="log_stat_never">Never</string>
     <string name="log_stat_entries">entries</string>
-    <string name="confirm">Confirm</string>
-    <string name="cancel">Cancel</string>
     <string name="alarm_intercept_title">MIUI scheduled broadcast intercepted</string>
-    <string name="alarm_intercept_content">Action: %1$s\nTime: %2$s</string>
+    <string name="alarm_intercept_content">Action: %1$s\nTime: %2$s\nEstimate Next: %3$s</string>
 
     <!-- Service -->
     <string name="receive_time_st">Receive Time:</string>
@@ -104,24 +104,27 @@
     <string name="log_detail_size">Size</string>
     <string name="log_count_unit">times</string>
 
+    <!-- ThemeInstaller -->
+    <string name="theme_install_invalid_file_or_uri_scheme">Invalid file path or unsupported URI scheme</string>
+    <string name="theme_install_only_support_mtz">Only support MTZ files!</string>
+    <string name="theme_install_success">Theme install success</string>
+    <string name="theme_install_failed">Theme install failed</string>
+    <string name="theme_install_source">Source: %1$s</string>
+    <string name="theme_install_request_sent">Theme apply request sent</string>
+    <string name="theme_install_failed_starting_manager">Failed starting theme manager</string>
+    <string name="theme_install_failed_handle_file">Failed handling file: %1$s</string>
+    <string name="theme_install_source_file_not_exist">Source file does not exist</string>
+    <string name="theme_install_source_file_not_readable">Source file is not readable</string>
+    <string name="theme_install_file_copy_failed">File copy failed</string>
+    <string name="theme_install_file_download_failed">File download failed</string>
+
     <!-- About -->
     <string name="about_title">About</string>
     <string name="about_version_label">Version</string>
-    <string name="about_build_time_label">Build Time</string>
-    <string name="about_contributors">Developer</string>
-    <string name="about_developer">Developer</string>
-    <string name="about_developer_avatar">Developer Avatar</string>
-    <string name="about_feedback">Feedback</string>
-    <string name="about_feedback_desc">Join QQ Group for feedback</string>
-    <string name="about_support">Support</string>
-    <string name="about_sponsor">Sponsor</string>
-    <string name="about_sponsor_summary">Tap to see a note</string>
-    <string name="about_sponsor_toast">No need to sponsor me—treat yourself to a good meal instead!</string>
+    <string name="about_blend_version">Blend %1$s (%2$s)</string>
     <string name="about_others">Others</string>
     <string name="about_github">GitHub</string>
     <string name="about_github_desc">View source code</string>
-    <string name="about_qq_not_installed">Please install or update QQ</string>
-    <string name="about_open_bilibili_failed">Cannot open Bilibili</string>
     <string name="about_open_failed">Failed to open</string>
     <string name="back">Back</string>
 
@@ -133,16 +136,6 @@
     <string name="keep_alive_notification_title">ThemeStore Running</string>
     <string name="keep_alive_notification_content">Installed:%1$d | Intercepted:%2$d</string>
     <string name="keep_alive_notification_permission_required">Please grant notification permission before enabling keep-alive</string>
-
-    <!-- Optimization Mode -->
-    <string name="optimization_mode_title">Optimization Mode</string>
-    <string name="optimization_mode_summary">Keep only background service, save memory and CPU (requires accessibility)</string>
-    <string name="optimization_mode_dialog_title">Enable Optimization Mode</string>
-    <string name="optimization_mode_dialog_message">After enabling, the APP UI will close automatically, keeping only the background service running.\n\nBenefits:\n• Save 200–300MB memory\n• Reduce CPU usage\n• Core functions unaffected\n\nTo reopen the APP or disable optimization mode, tap the button in the notification.\n\nEnable now?</string>
-    <string name="optimization_mode_notification_action">Exit Optimization</string>
-    <string name="optimization_mode_enabled_toast">Optimization mode enabled, APP will exit in 2 seconds</string>
-    <string name="optimization_mode_disabled_toast">Optimization mode disabled</string>
-    <string name="optimization_mode_require_accessibility">Optimization mode requires accessibility permission first</string>
 
     <string name="permission_shizuku_title">Shizuku Permission</string>
     <string name="permission_shizuku_desc">Perform advanced system operations without Root</string>
@@ -160,10 +153,15 @@
     <string name="close">Close</string>
     <string name="copy">Copy</string>
 
-
     <string name="theme_settings">Theme Settings</string>
     <string name="personalization">Personalization</string>
     <string name="theme_settings_desc">Change the theme of the app</string>
+    <string name="theme_settings_ui_style">UI Style</string>
+    <string name="theme_settings_miuix_ui">Miuix UI</string>
+    <string name="theme_settings_use_apple_floating_bar">Enable floating bottom bar</string>
+    <string name="theme_settings_use_apple_floating_bar_desc">Display a floating style navigation bar at the bottom of the screen</string>
+    <string name="theme_settings_use_blur">Enable Blur</string>
+    <string name="theme_settings_use_blur_desc">Enable blur for the app</string>
     <string name="theme_settings_miuix_custom_colors">Custom Colors</string>
     <string name="theme_settings_miuix_custom_colors_desc">Customize theme colors in Miuix theme style</string>
     <string name="theme_settings_theme_mode">Theme Mode</string>
@@ -173,6 +171,7 @@
     <string name="theme_settings_theme_mode_system">Follow system theme</string>
     <string name="theme_settings_palette_style">Palette Style</string>
     <string name="theme_settings_palette_style_desc">Select palette style</string>
+    <string name="theme_settings_color_spec">Color Spec</string>
     <string name="theme_settings_dynamic_color">Dynamic Color</string>
     <string name="theme_settings_dynamic_color_desc">Theme color based on wallpaper</string>
     <string name="theme_settings_theme_color">Theme Color</string>
