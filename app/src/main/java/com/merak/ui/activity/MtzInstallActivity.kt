@@ -15,7 +15,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import com.merak.core.installer.ThemeInstallerManager
-import com.merak.core.os.shizuku.AutoAccessibilityManager
 import com.merak.service.ThemeInstallAccessibilityService
 import com.merak.ui.components.MtzInstallDialog
 import com.merak.ui.theme.ThemeStoreMiuixTheme
@@ -34,7 +33,6 @@ import timber.log.Timber
 
 class MtzInstallActivity : ComponentActivity(), KoinComponent {
 
-    private val autoAccessibilityManager: AutoAccessibilityManager by inject()
     private val themeInstallerManager: ThemeInstallerManager by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {

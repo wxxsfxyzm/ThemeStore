@@ -34,7 +34,7 @@
     <string name="permission_notification_desc">用於發送安裝進度通知</string>
     <string name="permission_already_granted">權限已授予</string>
     <string name="next_step">下一步</string>
-    <string name="copying_theme">正在複製主題...</string>
+    <string name="copying_theme">正在複製主題…</string>
     <string name="theme_copied">主題檔案已複製</string>
     <string name="copy_failed">複製失敗</string>
     <string name="download_started">開始下載主題…</string>

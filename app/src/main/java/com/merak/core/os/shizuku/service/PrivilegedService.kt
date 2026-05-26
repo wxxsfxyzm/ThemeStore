@@ -171,6 +171,7 @@ class PrivilegedService() : IUserService.Stub(), KoinComponent {
         )
     }
 
+    @SuppressLint("PrivateApi")
     private fun hookedContentProvider(binder: IBinder): Any {
         val contentProviderNative = Class.forName("android.content.ContentProviderNative")
         return reflect.invokeStatic<Any>(

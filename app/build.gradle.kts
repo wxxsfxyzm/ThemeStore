@@ -25,6 +25,7 @@ android {
         versionName = "1.0"
 
         ndk {
+            //noinspection ChromeOsAbiSupport
             abiFilters += "arm64-v8a"
         }
 

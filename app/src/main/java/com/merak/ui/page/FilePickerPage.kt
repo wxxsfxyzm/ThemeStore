@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import com.merak.ui.components.MtzInstallDialog
 import com.merak.ui.icons.AppIcons
 import com.merak.x.R
+import timber.log.Timber
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
@@ -44,7 +45,6 @@ import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.basic.rememberTopAppBarState
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.overScrollVertical
-import timber.log.Timber
 import java.io.File
 
 data class FileItem(
@@ -64,7 +64,7 @@ fun FilePickerPage(
     }
     var fileItems by remember { mutableStateOf<List<FileItem>>(emptyList()) }
     val scrollBehavior = MiuixScrollBehavior(rememberTopAppBarState())
-    var showDialog = remember { mutableStateOf(false) }
+    val showDialog = remember { mutableStateOf(false) }
     var selectedMtzFile by remember { mutableStateOf<File?>(null) }
     val checkedStates = remember { mutableStateMapOf<Long, Boolean>() }
 

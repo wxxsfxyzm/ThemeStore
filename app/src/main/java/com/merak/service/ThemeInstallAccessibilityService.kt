@@ -133,7 +133,7 @@ open class ThemeInstallAccessibilityService : AccessibilityService(), KoinCompon
             priority = IntentFilter.SYSTEM_HIGH_PRIORITY
         }
         try {
-            registerReceiver(mBroadcastReceiver, intentFilter, Context.RECEIVER_EXPORTED)
+            registerReceiver(mBroadcastReceiver, intentFilter, RECEIVER_EXPORTED)
         } catch (e: Exception) {
             Timber.tag(TAG).e(e, "Receiver registration failed")
         }

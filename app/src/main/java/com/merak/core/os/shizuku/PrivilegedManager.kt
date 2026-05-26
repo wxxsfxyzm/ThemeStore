@@ -1,6 +1,7 @@
 package com.merak.core.os.shizuku
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.AppOpsManager
 import android.content.ComponentName
 import android.content.Context
@@ -146,7 +147,7 @@ class PrivilegedManager(private val context: Context) {
     }
 
     private fun allowKeepAliveAppOps(
-        userService: com.merak.core.os.shizuku.service.UserService,
+        userService: UserService,
         packageName: String,
         uid: Int
     ) {
@@ -164,6 +165,7 @@ class PrivilegedManager(private val context: Context) {
         }
     }
 
+    @SuppressLint("DiscouragedPrivateApi")
     private fun appOpCode(op: String): Int {
         val method = AppOpsManager::class.java.getDeclaredMethod("strOpToOp", String::class.java)
         method.isAccessible = true

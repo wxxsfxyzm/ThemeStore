@@ -1,6 +1,5 @@
 package com.merak.ui.page
 
-import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -84,7 +83,6 @@ fun MainPage(
     val coroutineScope = rememberCoroutineScope()
     val floatingBackdrop = rememberLayerBackdrop()
     val miuixBackdrop = rememberMiuixBlurBackdrop(useBlur)
-    val useFloatingBottomBarBlur = useBlur && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val isDefinitelyWide = maxWidth > UIConstants.WIDE_SCREEN_THRESHOLD
@@ -97,7 +95,7 @@ fun MainPage(
                 coroutineScope = coroutineScope,
                 navigationItems = items,
                 useFloatingBottomBar = useFloatingBottomBar,
-                useFloatingBottomBarBlur = useFloatingBottomBarBlur,
+                useFloatingBottomBarBlur = useBlur,
                 floatingBackdrop = floatingBackdrop,
                 miuixBackdrop = miuixBackdrop
             )
@@ -107,7 +105,7 @@ fun MainPage(
                 coroutineScope = coroutineScope,
                 navigationItems = items,
                 useFloatingBottomBar = useFloatingBottomBar,
-                useFloatingBottomBarBlur = useFloatingBottomBarBlur,
+                useFloatingBottomBarBlur = useBlur,
                 floatingBackdrop = floatingBackdrop,
                 miuixBackdrop = miuixBackdrop
             )

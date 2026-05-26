@@ -1,7 +1,6 @@
 package com.merak.ui.page
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -50,9 +49,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.merak.ui.components.MiuixBackButton
-import com.merak.ui.theme.ThemeStoreTheme
 import com.merak.ui.library.blend.ColorBlendToken
 import com.merak.ui.library.effect.BgEffectBackground
+import com.merak.ui.theme.ThemeStoreTheme
 import com.merak.x.BuildConfig
 import com.merak.x.R
 import kotlinx.coroutines.flow.onEach
@@ -390,7 +389,7 @@ private fun AboutContentBody(
                         title = stringResource(R.string.about_github),
                         summary = stringResource(R.string.about_github_desc),
                         onClick = {
-                            uriHandler.openUri("https://github.com/MerakXingChen/ThemeStore")
+                            uriHandler.openUri("https://github.com/wxxsfxyzm/ThemeStore")
                         }
                     )
                 }

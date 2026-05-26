@@ -1,6 +1,5 @@
 package com.merak.ui.page.settings.theme
 
-import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -46,22 +45,22 @@ import androidx.compose.ui.unit.dp
 import com.merak.ui.components.MiuixBackButton
 import com.merak.ui.components.MiuixSwitchWidget
 import com.merak.ui.theme.getMiuixAppBarColor
-import com.merak.ui.theme.rememberMiuixBlurBackdrop
 import com.merak.ui.theme.material.PaletteStyle
 import com.merak.ui.theme.material.RawColor
 import com.merak.ui.theme.material.ThemeColorSpec
 import com.merak.ui.theme.material.ThemeMode
 import com.merak.ui.theme.material.dynamicColorScheme
+import com.merak.ui.theme.rememberMiuixBlurBackdrop
 import com.merak.ui.theme.tsMiuixBlurEffect
 import com.merak.ui.util.getDisplayName
 import com.merak.x.R
 import org.koin.androidx.compose.koinViewModel
 import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.DropdownItem
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.SmallTitle
-import top.yukonga.miuix.kmp.basic.DropdownItem
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.blur.layerBackdrop
@@ -194,8 +193,7 @@ fun AppearancePage(
 
             item {
                 AnimatedVisibility(
-                    visible = state.useMiuixMonet &&
-                            (!state.useDynamicColor || Build.VERSION.SDK_INT < Build.VERSION_CODES.S),
+                    visible = state.useMiuixMonet && !state.useDynamicColor,
                     enter = fadeIn(animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)) +
                             expandVertically(animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing)),
                     exit = fadeOut(animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing)) +
@@ -237,8 +235,7 @@ fun AppearancePage(
                                                         colorSpec = state.colorSpec,
                                                         textStyle = MiuixTheme.textStyles.footnote1,
                                                         textColor = MiuixTheme.colorScheme.onSurface,
-                                                        isSelected = state.seedColor == rawColor.color &&
-                                                                !(state.useDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S),
+                                                        isSelected = state.seedColor == rawColor.color && !state.useDynamicColor
                                                     ) {
                                                         viewModel.dispatch(
                                                             AppearanceAction.SetSeedColor(

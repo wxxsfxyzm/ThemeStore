@@ -1,7 +1,6 @@
 package com.merak.ui.page.welcome
 
 import android.Manifest
-import android.app.Application
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Environment
@@ -20,7 +19,6 @@ import rikka.shizuku.Shizuku
 import timber.log.Timber
 
 class WelcomeViewModel(
-    private val context: Application,
     private val privilegedManager: PrivilegedManager,
     private val settingsRepo: SettingsRepo
 ) : ViewModel() {
@@ -50,7 +48,7 @@ class WelcomeViewModel(
     init {
         try {
             Shizuku.addRequestPermissionResultListener(shizukuListener)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // Ignore
         }
     }
@@ -59,7 +57,7 @@ class WelcomeViewModel(
         super.onCleared()
         try {
             Shizuku.removeRequestPermissionResultListener(shizukuListener)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // Ignore
         }
     }
@@ -74,7 +72,7 @@ class WelcomeViewModel(
                 } else {
                     _isShizukuGranted.value = false
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 _isShizukuAvailable.value = false
                 _isShizukuGranted.value = false
             }

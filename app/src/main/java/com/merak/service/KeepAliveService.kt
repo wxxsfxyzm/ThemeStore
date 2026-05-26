@@ -12,7 +12,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
-import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
@@ -92,7 +91,6 @@ class KeepAliveService : Service(), KoinComponent {
         }
 
         fun hasForegroundServiceSpecialUseAllowed(context: Context): Boolean {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) return true
             val appOps = context.getSystemService(AppOpsManager::class.java) ?: return false
             val mode = appOps.checkOpNoThrow(
                 OPSTR_FOREGROUND_SERVICE_SPECIAL_USE,
@@ -225,6 +223,7 @@ class KeepAliveService : Service(), KoinComponent {
             isA11yConnected || isA11yEnabled -> {
                 getString(R.string.keep_alive_notification_content, stats.themeInstallCount, stats.alarmInterceptCount)
             }
+
             else -> getString(R.string.keep_alive_notification_accessibility_disabled)
         }
 

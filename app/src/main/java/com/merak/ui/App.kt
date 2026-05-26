@@ -58,7 +58,7 @@ fun App(
     val predictiveBackAnimation = remember { MiuixPredictiveBackAnimation() }
 
     CompositionLocalProvider(LocalNavigator provides navigator) {
-        var gestureState: NavigationEventState<SceneInfo<NavKey>>? = null
+        var gestureState: NavigationEventState<SceneInfo<NavKey>>?
         val navigationScope = rememberCoroutineScope()
         val onBack: (() -> Unit) -> Unit = { callback ->
             navigationScope.launch {

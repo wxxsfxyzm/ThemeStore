@@ -139,10 +139,6 @@ data class SettingsReflectionInfo(
     val originalBinder: IBinder
 )
 
-fun ReflectManager.resolveSettingsBinder(): SettingsReflectionInfo? {
-    return resolveSettingsBinder(Settings.Global::class.java)
-}
-
 fun ReflectManager.resolveSettingsBinder(settingsClass: Class<*>): SettingsReflectionInfo? {
     val holder = getStaticValue<Any>("sProviderHolder", settingsClass) ?: return null
     val provider = getValue<Any>(holder, "mContentProvider") ?: return null

@@ -11,16 +11,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import com.google.android.accessibility.selecttospeak.SelectToSpeakService
-import com.merak.service.ThemeInstallAccessibilityService
 import com.merak.ui.components.MiuixNavigationItemWidget
 import com.merak.ui.theme.getMiuixAppBarColor
 import com.merak.ui.theme.rememberMiuixBlurBackdrop
@@ -35,10 +31,10 @@ import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.basic.rememberTopAppBarState
 import top.yukonga.miuix.kmp.blur.layerBackdrop
-import top.yukonga.miuix.kmp.preference.ArrowPreference as SuperArrow
-import top.yukonga.miuix.kmp.preference.SwitchPreference as SuperSwitch
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
+import top.yukonga.miuix.kmp.preference.ArrowPreference as SuperArrow
+import top.yukonga.miuix.kmp.preference.SwitchPreference as SuperSwitch
 
 @Composable
 fun SettingsPage(
@@ -53,19 +49,11 @@ fun SettingsPage(
 
     val scrollBehavior = MiuixScrollBehavior(rememberTopAppBarState())
 
-    val showOptimizationDialog = remember { mutableStateOf(false) }
-
     fun hasNotificationPermission() =
         ContextCompat.checkSelfPermission(
             context,
             Manifest.permission.POST_NOTIFICATIONS
         ) == PackageManager.PERMISSION_GRANTED
-
-    fun isAccessibilityEnabled(): Boolean =
-        ThemeInstallAccessibilityService.isAccessibilityServiceEnabled(
-            context,
-            SelectToSpeakService::class.java
-        )
 
     if (settingsState == null) return
     val settings = settingsState!!

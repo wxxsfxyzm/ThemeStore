@@ -47,7 +47,7 @@ data class HomeUiState(
 class HomeViewModel(
     private val context: Application,
     private val privilegedManager: PrivilegedManager,
-    private val autoAccessibilityManager: AutoAccessibilityManager,
+    autoAccessibilityManager: AutoAccessibilityManager,
     private val settingsRepo: SettingsRepo
 ) : ViewModel() {
 
@@ -78,12 +78,14 @@ class HomeViewModel(
                     _uiState.update { it.copy(isAccessibilityEnabled = true) }
                     refreshState("accessibility_up_broadcast")
                 }
+
                 ThemeInstallAccessibilityService.ACTION_SERVICE_DOWN -> {
                     accessibilityConnectionKnown = false
                     Timber.tag(TAG).d("Accessibility broadcast: DOWN")
                     _uiState.update { it.copy(isAccessibilityEnabled = false) }
                     refreshState("accessibility_down_broadcast")
                 }
+
                 KeepAliveService.ACTION_STATE_CHANGED -> {
                     val isRunning = intent.getBooleanExtra(
                         KeepAliveService.EXTRA_IS_RUNNING,
