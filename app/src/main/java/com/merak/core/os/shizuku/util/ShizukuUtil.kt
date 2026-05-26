@@ -9,7 +9,9 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.pm.IPackageManager
 import android.content.pm.PackageManager
+import android.os.IBinder
 import android.os.Process
+import android.provider.Settings
 import com.android.internal.app.IAppOpsService
 import com.merak.core.os.reflect.ReflectManager
 import com.merak.core.os.reflect.getStaticValue
@@ -25,6 +27,7 @@ import rikka.shizuku.ShizukuBinderWrapper
 import rikka.shizuku.SystemServiceHelper
 import rikka.sui.Sui
 import timber.log.Timber
+import java.lang.reflect.Field
 
 suspend fun <T> requireShizukuPermissionGranted(action: suspend () -> T): T {
     callbackFlow {
@@ -116,26 +119,35 @@ class ShizukuHook(private val reflectManager: ReflectManager) {
     }
 
     // 4. Hook SettingsBinder
-    // BinderWrapper to SettingsBinder may lead to a crash on HyperOS due to system injection
-    // So we use shell command instead of BinderWrapper
-    /*    val hookedSettingsBinder: IBinder? by lazy {
-            Timber.tag(TAG).d("Creating on-demand hooked Settings Binder...")
-            try {
-                val info = reflectManager.resolveSettingsSecureBinder() ?: return@lazy null
-                ShizukuBinderWrapper(info.originalBinder).also {
-                    Timber.tag(TAG).i("On-demand hooked Settings Binder created.")
-                }
-            } catch (e: Exception) {
-                Timber.tag(TAG).e(e, "Failed to create hooked Settings Binder")
-                null
+    val hookedSettingsBinder: IBinder? by lazy {
+        Timber.tag(TAG).d("Creating on-demand hooked Settings Binder...")
+        try {
+            val info = reflectManager.resolveSettingsBinder(Settings.Secure::class.java) ?: return@lazy null
+            ShizukuBinderWrapper(info.originalBinder).also {
+                Timber.tag(TAG).i("On-demand hooked Settings Binder created.")
             }
+        } catch (e: Exception) {
+            Timber.tag(TAG).e(e, "Failed to create hooked Settings Binder")
+            null
         }
-    */
+    }
 }
 
-/*
 data class SettingsReflectionInfo(
     val provider: Any,
     val remoteField: Field,
     val originalBinder: IBinder
-)*/
+)
+
+fun ReflectManager.resolveSettingsBinder(): SettingsReflectionInfo? {
+    return resolveSettingsBinder(Settings.Global::class.java)
+}
+
+fun ReflectManager.resolveSettingsBinder(settingsClass: Class<*>): SettingsReflectionInfo? {
+    val holder = getStaticValue<Any>("sProviderHolder", settingsClass) ?: return null
+    val provider = getValue<Any>(holder, "mContentProvider") ?: return null
+    val remoteField = getDeclaredField("mRemote", provider.javaClass) ?: return null
+    val originalBinder = remoteField.get(provider) as? IBinder ?: return null
+
+    return SettingsReflectionInfo(provider, remoteField, originalBinder)
+}

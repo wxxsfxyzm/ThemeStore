@@ -69,6 +69,9 @@
     <string name="log_stat_times">次</string>
     <string name="log_stat_never">從未</string>
     <string name="log_stat_entries">條</string>
+    <string name="alarm_intercept_title">MIUI 定時廣播已攔截</string>
+    <string name="alarm_intercept_content">操作行為: %1$s\n觸發時間: %2$s\n預計下次廣播：%3$s</string>
+    <string name="estimated_next_time">預計 %1$s 左右</string>
     <string name="confirm">確定</string>
     <string name="cancel">取消</string>
 
@@ -96,6 +99,25 @@
     <string name="log_detail_size">大小</string>
     <string name="log_count_unit">次</string>
 
+    <!-- ThemeInstaller -->
+    <string name="theme_install_invalid_file_or_uri_scheme">無效的檔案或不支援的協議</string>
+    <string name="theme_install_only_support_mtz">僅支援 MTZ 檔案！</string>
+    <string name="theme_install_success">主題安裝成功</string>
+    <string name="theme_install_failed">主題安裝失敗</string>
+    <string name="theme_install_source">來源：%1$s</string>
+    <string name="theme_install_request_sent">已發送主題套用請求</string>
+    <string name="theme_install_failed_starting_manager">啟動主題管理器錯誤</string>
+    <string name="theme_install_failed_handle_file">處理檔案失敗：%1$s</string>
+    <string name="theme_install_source_file_not_exist">來源檔案不存在</string>
+    <string name="theme_install_source_file_not_readable">來源檔案不可讀取</string>
+    <string name="theme_install_file_copy_failed">檔案複製失敗</string>
+    <string name="theme_install_file_download_failed">檔案下載失敗</string>
+    <string name="theme_install_local_source">本地檔案：%1$s（Flags: 0x%2$s）</string>
+    <string name="theme_install_source_with_flags">來源：%1$s（Flags: 0x%2$s）</string>
+    <string name="theme_install_online_source">URL：%1$s\n檔案：%2$s（%3$d bytes）</string>
+    <string name="theme_install_online_failure">URL：%1$s\n原因：%2$s</string>
+    <string name="theme_install_error_detail">原因：%1$s</string>
+
     <!-- About -->
     <string name="about_title">關於</string>
     <string name="about_version_label">版本</string>
@@ -113,5 +135,6 @@
     <string name="keep_alive_channel_desc">保持應用和無障礙服務運行，防止被系統清理</string>
     <string name="keep_alive_notification_title">ThemeStore 運行中</string>
     <string name="keep_alive_notification_content">安裝:%1$d次 | 攔截:%2$d次</string>
+    <string name="keep_alive_notification_accessibility_disabled">無障礙已關閉</string>
     <string name="keep_alive_notification_permission_required">請先授予通知權限才能開啟常駐通知保活</string>
 </resources>

@@ -1,6 +1,7 @@
 package com.merak.di
 
-import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.core.MultiProcessDataStoreFactory
+import androidx.datastore.preferences.core.PreferencesFileSerializer
 import androidx.datastore.preferences.preferencesDataStoreFile
 import com.merak.data.settings.local.AppDataStore
 import com.merak.data.settings.repo.SettingsRepo
@@ -13,9 +14,10 @@ import org.koin.dsl.module
 
 val settingsModule = module {
     single {
-        PreferenceDataStoreFactory.create {
-            androidContext().preferencesDataStoreFile("themestore_prefs")
-        }
+        MultiProcessDataStoreFactory.create(
+            serializer = PreferencesFileSerializer,
+            produceFile = { androidContext().preferencesDataStoreFile("themestore_prefs") }
+        )
     }
 
     singleOf(::AppDataStore)

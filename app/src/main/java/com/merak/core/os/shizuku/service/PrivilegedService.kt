@@ -1,14 +1,20 @@
 package com.merak.core.os.shizuku.service
 
 import android.annotation.SuppressLint
+import android.content.AttributionSource
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Bundle
+import android.os.IBinder
 import android.os.ParcelFileDescriptor
 import android.os.RemoteException
+import android.provider.Settings
 import android.util.Log
 import com.merak.core.os.reflect.ReflectManager
 import com.merak.core.os.reflect.invoke
+import com.merak.core.os.reflect.invokeStatic
+import com.merak.core.os.shizuku.util.ShizukuContext
 import com.merak.core.os.shizuku.util.ShizukuHook
 import com.merak.x.IUserService
 import org.koin.core.component.KoinComponent
@@ -23,6 +29,9 @@ class PrivilegedService() : IUserService.Stub(), KoinComponent {
     companion object {
         private const val TAG = "PrivilegedService"
         private const val SHELL_PATH = "/system/bin/sh"
+        private const val CALL_METHOD_USER_KEY = "_user"
+        private const val CALL_METHOD_OVERRIDEABLE_BY_RESTORE_KEY = "_overrideable_by_restore"
+        private const val CALL_METHOD_PUT_SECURE = "PUT_secure"
     }
 
     private val context by inject<Context>()
@@ -82,9 +91,11 @@ class PrivilegedService() : IUserService.Stub(), KoinComponent {
         val serviceString = componentName.flattenToString()
 
         try {
-            // 1. Retrieve the currently enabled accessibility services
-            val currentServicesStr = execArr(arrayOf("settings", "get", "secure", "enabled_accessibility_services")).trim()
-            val currentServicesList = if (currentServicesStr == "null" || currentServicesStr.isEmpty()) {
+            val currentServicesStr = Settings.Secure.getString(
+                context.contentResolver,
+                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+            )
+            val currentServicesList = if (currentServicesStr.isNullOrEmpty()) {
                 emptyList<String>()
             } else {
                 currentServicesStr.split(":")
@@ -106,34 +117,68 @@ class PrivilegedService() : IUserService.Stub(), KoinComponent {
                 }
             }
 
-            // 3. Write the changes back to the system settings if necessary
             if (isChanged) {
                 val newServicesStr = newServicesList.joinToString(":")
+                val accessibilityEnabled = enabled || newServicesStr.isNotEmpty()
 
-                // Use 'delete' instead of 'put' when the list becomes empty
-                if (newServicesStr.isEmpty()) {
-                    execArr(arrayOf("settings", "delete", "secure", "enabled_accessibility_services"))
-                } else {
-                    execArr(arrayOf("settings", "put", "secure", "enabled_accessibility_services", newServicesStr))
-                }
-
-                // If enabling, ensure the master accessibility toggle is switched ON
-                if (enabled) {
-                    execArr(arrayOf("settings", "put", "secure", "accessibility_enabled", "1"))
-                } else if (newServicesStr.isEmpty()) {
-                    // Turn off the master toggle if no accessibility services remain
-                    execArr(arrayOf("settings", "put", "secure", "accessibility_enabled", "0"))
-                }
+                putSecureSettingWithHookedProvider(
+                    Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
+                    newServicesStr
+                )
+                putSecureSettingWithHookedProvider(
+                    Settings.Secure.ACCESSIBILITY_ENABLED,
+                    if (accessibilityEnabled) "1" else "0"
+                )
 
                 val action = if (enabled) "enabled" else "disabled"
-                Timber.i("Successfully %s accessibility service via Shell: %s", action, serviceString)
+                Timber.i("Successfully %s accessibility service via BinderWrapper: %s", action, serviceString)
             } else {
-                Timber.d("Accessibility service state is already correct, no shell command needed.")
+                Timber.d("Accessibility service state is already correct.")
             }
         } catch (e: Exception) {
-            Timber.e(e, "Failed to set accessibility service state via shell commands.")
+            Timber.e(e, "Failed to set accessibility service state via BinderWrapper.")
             throw e
         }
+    }
+
+    private fun putSecureSettingWithHookedProvider(name: String, value: String) {
+        val provider = hookedContentProvider(
+            shizukuHook.hookedSettingsBinder
+                ?: throw IllegalStateException("Hooked Settings binder is unavailable")
+        )
+        val extras = Bundle().apply {
+            putString(Settings.NameValueTable.VALUE, value)
+            putInt(CALL_METHOD_USER_KEY, android.os.Process.myUid() / 100000)
+            putBoolean(CALL_METHOD_OVERRIDEABLE_BY_RESTORE_KEY, true)
+        }
+
+        reflect.invoke<Bundle>(
+            obj = provider,
+            name = "call",
+            clazz = provider.javaClass,
+            parameterTypes = arrayOf(
+                AttributionSource::class.java,
+                String::class.java,
+                String::class.java,
+                String::class.java,
+                Bundle::class.java
+            ),
+            ShizukuContext(context).attributionSource,
+            Settings.Secure.CONTENT_URI.authority,
+            CALL_METHOD_PUT_SECURE,
+            name,
+            extras
+        )
+    }
+
+    private fun hookedContentProvider(binder: IBinder): Any {
+        val contentProviderNative = Class.forName("android.content.ContentProviderNative")
+        return reflect.invokeStatic<Any>(
+            name = "asInterface",
+            clazz = contentProviderNative,
+            parameterTypes = arrayOf(IBinder::class.java),
+            binder
+        ) ?: throw IllegalStateException("Failed to create hooked Settings provider")
     }
 
     @SuppressLint("PrivateApi")

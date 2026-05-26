@@ -10,16 +10,19 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.merak.core.os.shizuku.PrivilegedManager
+import com.merak.data.settings.repo.SettingsRepo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import rikka.shizuku.Shizuku
+import timber.log.Timber
 
 class WelcomeViewModel(
     private val context: Application,
-    private val privilegedManager: PrivilegedManager
+    private val privilegedManager: PrivilegedManager,
+    private val settingsRepo: SettingsRepo
 ) : ViewModel() {
 
     private val _isShizukuAvailable = MutableStateFlow(false)
@@ -83,7 +86,7 @@ class WelcomeViewModel(
             try {
                 Shizuku.requestPermission(1002)
             } catch (e: Exception) {
-                e.printStackTrace()
+                Timber.e(e, "Failed to request Shizuku permission")
             }
         }
     }
@@ -91,15 +94,17 @@ class WelcomeViewModel(
     // Refactored to a suspend function for cleaner coroutine control in the UI layer
     suspend fun grantPermissionsViaShizuku() {
         withContext(Dispatchers.IO) {
-            privilegedManager.grantStorageAndNotificationPermissions()
-            privilegedManager.setAccessibilityServiceState(enabled = true)
+            if (privilegedManager.runPrivilegedBootstrap()) {
+                settingsRepo.setShizukuPrivilegedBootstrapCompleted(true)
+            }
         }
     }
 
     fun checkStandardPermissions(context: Context) {
         _storageGranted.value = Environment.isExternalStorageManager()
 
-        val expectedService = "${context.packageName}/com.merak.service.ThemeInstallAccessibilityService"
+        val expectedService =
+            "${context.packageName}/com.google.android.accessibility.selecttospeak.SelectToSpeakService"
         val enabledServices = Settings.Secure.getString(
             context.contentResolver,
             Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES

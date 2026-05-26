@@ -66,7 +66,6 @@ fun WelcomePage(
                         exit = fadeOut(tween(200)) + slideOutHorizontally(tween(200)) { it / 2 }
                     ) {
                         MiuixBackButton(
-                            modifier = Modifier.padding(start = 16.dp),
                             onClick = { handleBackNavigation() }
                         )
                     }

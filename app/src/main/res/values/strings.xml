@@ -117,6 +117,11 @@
     <string name="theme_install_source_file_not_readable">Source file is not readable</string>
     <string name="theme_install_file_copy_failed">File copy failed</string>
     <string name="theme_install_file_download_failed">File download failed</string>
+    <string name="theme_install_local_source">Local file: %1$s (Flags: 0x%2$s)</string>
+    <string name="theme_install_source_with_flags">Source: %1$s (Flags: 0x%2$s)</string>
+    <string name="theme_install_online_source">URL: %1$s\nFile: %2$s (%3$d bytes)</string>
+    <string name="theme_install_online_failure">URL: %1$s\nReason: %2$s</string>
+    <string name="theme_install_error_detail">Reason: %1$s</string>
 
     <!-- About -->
     <string name="about_title">About</string>
@@ -135,6 +140,7 @@
     <string name="keep_alive_channel_desc">Keep app and accessibility service running, prevent system cleanup</string>
     <string name="keep_alive_notification_title">ThemeStore Running</string>
     <string name="keep_alive_notification_content">Installed:%1$d | Intercepted:%2$d</string>
+    <string name="keep_alive_notification_accessibility_disabled">Accessibility service disabled</string>
     <string name="keep_alive_notification_permission_required">Please grant notification permission before enabling keep-alive</string>
 
     <string name="permission_shizuku_title">Shizuku Permission</string>

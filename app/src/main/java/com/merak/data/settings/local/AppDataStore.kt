@@ -18,6 +18,8 @@ class AppDataStore(
     companion object {
         val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
         val WELCOME_PAGE_INDEX = intPreferencesKey("welcome_page_index")
+        val SHIZUKU_PRIVILEGED_BOOTSTRAP_COMPLETED =
+            booleanPreferencesKey("shizuku_privileged_bootstrap_completed")
 
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val THEME_USE_DYNAMIC_COLOR = booleanPreferencesKey("theme_use_dynamic_color")

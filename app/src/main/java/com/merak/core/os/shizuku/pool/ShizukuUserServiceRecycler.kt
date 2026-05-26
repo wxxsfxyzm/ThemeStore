@@ -10,6 +10,7 @@ import com.merak.core.os.shizuku.service.PrivilegedService
 import com.merak.core.os.shizuku.service.UserService
 import com.merak.core.os.shizuku.util.requireShizukuPermissionGranted
 import com.merak.di.init.processModules
+import com.merak.util.timber.AppLogcatTree
 import com.merak.x.BuildConfig
 import com.merak.x.IUserService
 import kotlinx.coroutines.channels.awaitClose
@@ -47,7 +48,7 @@ object ShizukuUserServiceRecycler :
 
     class ShizukuUserService @Keep constructor(context: Context) : IUserService.Stub() {
         init {
-            if (BuildConfig.DEBUG && Timber.treeCount == 0) Timber.plant(Timber.DebugTree())
+            if (BuildConfig.DEBUG && Timber.treeCount == 0) Timber.plant(AppLogcatTree())
             startKoin {
                 modules(processModules)
                 androidContext(context)

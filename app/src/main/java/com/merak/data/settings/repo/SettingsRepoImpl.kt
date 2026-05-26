@@ -23,6 +23,8 @@ class SettingsRepoImpl(
             AppSettings(
                 isOnboardingCompleted = prefs[AppDataStore.ONBOARDING_COMPLETED] ?: false,
                 welcomePageIndex = prefs[AppDataStore.WELCOME_PAGE_INDEX] ?: 0,
+                isShizukuPrivilegedBootstrapCompleted =
+                    prefs[AppDataStore.SHIZUKU_PRIVILEGED_BOOTSTRAP_COMPLETED] ?: false,
                 themeMode = runCatching {
                     ThemeMode.valueOf(prefs[AppDataStore.THEME_MODE] ?: ThemeMode.SYSTEM.name)
                 }.getOrDefault(ThemeMode.SYSTEM),
@@ -52,6 +54,10 @@ class SettingsRepoImpl(
 
     override suspend fun setWelcomePageIndex(index: Int) {
         dataStore.putInt(AppDataStore.WELCOME_PAGE_INDEX, index)
+    }
+
+    override suspend fun setShizukuPrivilegedBootstrapCompleted(completed: Boolean) {
+        dataStore.putBoolean(AppDataStore.SHIZUKU_PRIVILEGED_BOOTSTRAP_COMPLETED, completed)
     }
 
     override suspend fun setThemeMode(mode: ThemeMode) {

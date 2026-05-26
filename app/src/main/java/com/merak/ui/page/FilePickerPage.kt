@@ -44,6 +44,7 @@ import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.basic.rememberTopAppBarState
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.overScrollVertical
+import timber.log.Timber
 import java.io.File
 
 data class FileItem(
@@ -279,7 +280,7 @@ private fun loadFiles(directory: File, onLoaded: (List<FileItem>) -> Unit) {
 
         onLoaded(files)
     } catch (e: Exception) {
-        e.printStackTrace()
+        Timber.tag("FilePickerPage").e(e, "Failed to load files from %s", directory.absolutePath)
         onLoaded(emptyList())
     }
 }

@@ -1,6 +1,8 @@
 package com.merak.service
 
 import android.Manifest
+import android.app.ActivityManager
+import android.app.AppOpsManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -15,7 +17,7 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
-import com.merak.core.os.shizuku.PrivilegedManager
+import com.google.android.accessibility.selecttospeak.SelectToSpeakService
 import com.merak.data.settings.model.AppSettings
 import com.merak.data.settings.repo.SettingsRepo
 import com.merak.ui.activity.MainActivity
@@ -39,21 +41,26 @@ import java.io.File
 class KeepAliveService : Service(), KoinComponent {
 
     private val settingsRepo: SettingsRepo by inject()
-    private val privilegedManager: PrivilegedManager by inject()
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     companion object {
-        private const val CHANNEL_ID = "keep_alive_channel"
+        private const val CHANNEL_ID = "0"
         private const val NOTIFICATION_ID = 1001
         private const val ACTION_START = "com.merak.service.KeepAliveService.START"
         private const val ACTION_STOP = "com.merak.service.KeepAliveService.STOP"
+        const val ACTION_STATE_CHANGED = "com.merak.service.KeepAliveService.STATE_CHANGED"
+        const val EXTRA_IS_RUNNING = "com.merak.service.KeepAliveService.EXTRA_IS_RUNNING"
         private const val TAG = "KeepAliveService"
+        private const val OPSTR_FOREGROUND_SERVICE_SPECIAL_USE = "android:foreground_service_special_use"
 
         // Expose state for the Accessibility Watchdog to monitor
         private val _isRunningFlow = MutableStateFlow(false)
         val isRunningFlow = _isRunningFlow.asStateFlow()
 
         fun start(context: Context) {
+            if (!hasNotificationPermission(context)) return
+            if (!hasForegroundServiceSpecialUseAllowed(context)) return
+
             try {
                 val intent = Intent(context, KeepAliveService::class.java).apply {
                     action = ACTION_START
@@ -70,11 +77,34 @@ class KeepAliveService : Service(), KoinComponent {
             }
             context.startService(intent)
         }
+
+        @Suppress("DEPRECATION")
+        fun isServiceRunning(context: Context): Boolean {
+            val activityManager = context.getSystemService(ActivityManager::class.java) ?: return false
+            val serviceName = KeepAliveService::class.java.name
+            return activityManager.getRunningServices(Int.MAX_VALUE).any {
+                it.service.packageName == context.packageName && it.service.className == serviceName
+            }
+        }
+
+        fun hasNotificationPermission(context: Context): Boolean {
+            return ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+        }
+
+        fun hasForegroundServiceSpecialUseAllowed(context: Context): Boolean {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) return true
+            val appOps = context.getSystemService(AppOpsManager::class.java) ?: return false
+            val mode = appOps.checkOpNoThrow(
+                OPSTR_FOREGROUND_SERVICE_SPECIAL_USE,
+                android.os.Process.myUid(),
+                context.packageName
+            )
+            return mode != AppOpsManager.MODE_IGNORED && mode != AppOpsManager.MODE_ERRORED
+        }
     }
 
     override fun onCreate() {
         super.onCreate()
-        _isRunningFlow.value = true
         Timber.tag(TAG).d("Lifecycle | onCreate")
         createNotificationChannelIfNeeded()
 
@@ -105,60 +135,68 @@ class KeepAliveService : Service(), KoinComponent {
             return START_NOT_STICKY
         }
 
-        _isRunningFlow.value = true
-        startForegroundCompat()
-
-        return START_STICKY
+        return if (startForegroundCompat()) {
+            START_STICKY
+        } else {
+            stopSelfSafe()
+            START_NOT_STICKY
+        }
     }
 
-    private fun startForegroundCompat() {
-        try {
-            val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle(getString(R.string.keep_alive_notification_title))
-                .setContentText("Initializing...")
-                .setSmallIcon(R.drawable.magic_wand_color)
-                .setPriority(NotificationCompat.PRIORITY_MIN)
-                .build()
+    private fun startForegroundCompat(): Boolean {
+        if (!hasNotificationPermission(this)) return false
+        if (!hasForegroundServiceSpecialUseAllowed(this)) return false
 
-            // The core fix discovered from gkd
-            val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
-            } else {
-                0
-            }
-
-            ServiceCompat.startForeground(this, NOTIFICATION_ID, notification, type)
+        return try {
+            val isA11yEnabled = ThemeInstallAccessibilityService.isAccessibilityServiceEnabled(
+                this,
+                SelectToSpeakService::class.java
+            )
+            startForegroundCompat(
+                buildNotification(
+                    stats = calculateStatistics(),
+                    isA11yConnected = ThemeInstallAccessibilityService.isConnected(),
+                    isA11yEnabled = isA11yEnabled
+                )
+            )
             Timber.tag(TAG).d("FGS Started | ServiceCompat.startForeground executed")
+            true
         } catch (e: Exception) {
+            setRunningState(false)
             Timber.tag(TAG).e(e, "Failed to start foreground service")
+            false
         }
+    }
+
+    private fun startForegroundCompat(notification: Notification) {
+        ServiceCompat.startForeground(
+            this,
+            NOTIFICATION_ID,
+            notification,
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST
+        )
+        setRunningState(true)
     }
 
     private suspend fun updateNotification(settings: AppSettings, isA11yConnected: Boolean) {
-        if (!hasNotificationPermission()) return
+        if (!hasNotificationPermission(this)) return
+        if (!hasForegroundServiceSpecialUseAllowed(this)) return
 
         val stats = withContext(Dispatchers.IO) { calculateStatistics() }
-        val notification = buildNotification(stats, isA11yConnected)
-        val manager = getSystemService(NotificationManager::class.java)
-        manager?.notify(NOTIFICATION_ID, notification)
+        val isA11yEnabled = ThemeInstallAccessibilityService.isAccessibilityServiceEnabled(
+            this,
+            SelectToSpeakService::class.java
+        )
+        startForegroundCompat(buildNotification(stats, isA11yConnected, isA11yEnabled))
     }
 
     private fun handleStopAction() {
-        _isRunningFlow.value = false
-        serviceScope.launch {
-            withContext(Dispatchers.IO) {
-                try {
-                    privilegedManager.setAccessibilityServiceState(enabled = false)
-                } catch (e: Exception) {
-                    Timber.tag(TAG).e(e, "Failed to disable accessibility service")
-                }
-            }
-            stopSelfSafe()
-        }
+        setRunningState(false)
+        stopSelfSafe()
     }
 
     private fun stopSelfSafe() {
-        _isRunningFlow.value = false
+        setRunningState(false)
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
@@ -166,28 +204,28 @@ class KeepAliveService : Service(), KoinComponent {
     override fun onDestroy() {
         Timber.tag(TAG).d("Lifecycle | onDestroy - Swipe to kill triggered")
         // Crucial: Set to false so the Watchdog knows we died
-        _isRunningFlow.value = false
+        setRunningState(false)
         serviceScope.cancel()
         super.onDestroy()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    private fun buildNotification(stats: Statistics, isA11yConnected: Boolean): Notification {
+    private fun buildNotification(
+        stats: Statistics,
+        isA11yConnected: Boolean,
+        isA11yEnabled: Boolean
+    ): Notification {
         val pendingIntent = PendingIntent.getActivity(
             this, 0, Intent(this, MainActivity::class.java),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        val stopPendingIntent = PendingIntent.getService(
-            this, 2, Intent(this, KeepAliveService::class.java).apply { action = ACTION_STOP },
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        val statusText = if (isA11yConnected) {
-            getString(R.string.keep_alive_notification_content, stats.themeInstallCount, stats.alarmInterceptCount)
-        } else {
-            "Accessibility service disconnected. Tap to fix."
+        val statusText = when {
+            isA11yConnected || isA11yEnabled -> {
+                getString(R.string.keep_alive_notification_content, stats.themeInstallCount, stats.alarmInterceptCount)
+            }
+            else -> getString(R.string.keep_alive_notification_accessibility_disabled)
         }
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
@@ -196,10 +234,7 @@ class KeepAliveService : Service(), KoinComponent {
             .setSmallIcon(R.drawable.magic_wand_color)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
-            .setPriority(if (isA11yConnected) NotificationCompat.PRIORITY_LOW else NotificationCompat.PRIORITY_HIGH)
-            .setShowWhen(false)
-            .setOnlyAlertOnce(true)
-            .addAction(0, getString(R.string.action_stop), stopPendingIntent)
+            .setAutoCancel(false)
             .build()
     }
 
@@ -219,7 +254,7 @@ class KeepAliveService : Service(), KoinComponent {
                         if (line.contains("/${LogFormatter.TAG_ALARM_INTERCEPT}:")) alarmInterceptCount++
                     }
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // Ignore file IO issues
             }
         }
@@ -228,24 +263,28 @@ class KeepAliveService : Service(), KoinComponent {
 
     data class Statistics(val themeInstallCount: Int, val alarmInterceptCount: Int)
 
-    private fun hasNotificationPermission(): Boolean {
-        return ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
-    }
-
     private fun createNotificationChannelIfNeeded() {
         val manager = getSystemService(NotificationManager::class.java) ?: return
+        manager.notificationChannels
+            .filter { it.id != CHANNEL_ID }
+            .forEach { manager.deleteNotificationChannel(it.id) }
         if (manager.getNotificationChannel(CHANNEL_ID) != null) return
 
         val channel = NotificationChannel(
             CHANNEL_ID,
-            getString(R.string.keep_alive_channel_name),
+            getString(R.string.app_name),
             NotificationManager.IMPORTANCE_LOW
-        ).apply {
-            description = getString(R.string.keep_alive_channel_desc)
-            setShowBadge(false)
-            enableLights(false)
-            enableVibration(false)
-        }
+        )
         manager.createNotificationChannel(channel)
+    }
+
+    private fun setRunningState(isRunning: Boolean) {
+        _isRunningFlow.value = isRunning
+        sendBroadcast(
+            Intent(ACTION_STATE_CHANGED).apply {
+                setPackage(packageName)
+                putExtra(EXTRA_IS_RUNNING, isRunning)
+            }
+        )
     }
 }

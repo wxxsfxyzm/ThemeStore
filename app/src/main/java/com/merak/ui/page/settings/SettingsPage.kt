@@ -19,15 +19,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import com.google.android.accessibility.selecttospeak.SelectToSpeakService
 import com.merak.service.ThemeInstallAccessibilityService
 import com.merak.ui.components.MiuixNavigationItemWidget
 import com.merak.ui.theme.getMiuixAppBarColor
-import com.merak.ui.theme.rememberMiuixHazeStyle
-import com.merak.ui.theme.tsHazeEffect
+import com.merak.ui.theme.rememberMiuixBlurBackdrop
+import com.merak.ui.theme.tsMiuixBlurEffect
 import com.merak.util.toast
 import com.merak.x.R
-import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeSource
 import org.koin.androidx.compose.koinViewModel
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
@@ -35,6 +34,7 @@ import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.basic.rememberTopAppBarState
+import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.preference.ArrowPreference as SuperArrow
 import top.yukonga.miuix.kmp.preference.SwitchPreference as SuperSwitch
 import top.yukonga.miuix.kmp.utils.overScrollVertical
@@ -45,14 +45,13 @@ fun SettingsPage(
     onNavigateToAppearance: () -> Unit,
     onNavigateToAbout: () -> Unit,
     viewModel: SettingsViewModel = koinViewModel(),
-    hazeState: HazeState?,
+    enableBlur: Boolean,
     outerPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     val context = LocalContext.current
     val settingsState by viewModel.uiState.collectAsState()
 
     val scrollBehavior = MiuixScrollBehavior(rememberTopAppBarState())
-    val hazeStyle = rememberMiuixHazeStyle()
 
     val showOptimizationDialog = remember { mutableStateOf(false) }
 
@@ -65,17 +64,18 @@ fun SettingsPage(
     fun isAccessibilityEnabled(): Boolean =
         ThemeInstallAccessibilityService.isAccessibilityServiceEnabled(
             context,
-            ThemeInstallAccessibilityService::class.java
+            SelectToSpeakService::class.java
         )
 
     if (settingsState == null) return
     val settings = settingsState!!
+    val blurBackdrop = rememberMiuixBlurBackdrop(enableBlur)
 
     Scaffold(
         topBar = {
             TopAppBar(
-                modifier = Modifier.tsHazeEffect(hazeState, hazeStyle),
-                color = hazeState.getMiuixAppBarColor(),
+                modifier = Modifier.tsMiuixBlurEffect(blurBackdrop),
+                color = blurBackdrop.getMiuixAppBarColor(),
                 title = stringResource(R.string.title_settings),
                 scrollBehavior = scrollBehavior
             )
@@ -84,7 +84,7 @@ fun SettingsPage(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .then(hazeState?.let { Modifier.hazeSource(it) } ?: Modifier)
+                .then(blurBackdrop?.let { Modifier.layerBackdrop(it) } ?: Modifier)
                 .overScrollVertical()
                 .scrollEndHaptic()
                 .nestedScroll(scrollBehavior.nestedScrollConnection),

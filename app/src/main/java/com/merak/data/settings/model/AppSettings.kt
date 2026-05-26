@@ -7,6 +7,7 @@ import com.merak.ui.theme.material.ThemeMode
 data class AppSettings(
     val isOnboardingCompleted: Boolean,
     val welcomePageIndex: Int,
+    val isShizukuPrivilegedBootstrapCompleted: Boolean = false,
 
     // UI
     val themeMode: ThemeMode,

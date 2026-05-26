@@ -115,6 +115,15 @@
     <string name="theme_install_request_sent">已发送主题应用请求</string>
     <string name="theme_install_failed_starting_manager">启动主题管理器错误</string>
     <string name="theme_install_failed_handle_file">处理文件失败：%1$s</string>
+    <string name="theme_install_source_file_not_exist">源文件不存在</string>
+    <string name="theme_install_source_file_not_readable">源文件不可读取</string>
+    <string name="theme_install_file_copy_failed">文件复制失败</string>
+    <string name="theme_install_file_download_failed">文件下载失败</string>
+    <string name="theme_install_local_source">本地文件：%1$s（Flags: 0x%2$s）</string>
+    <string name="theme_install_source_with_flags">来源：%1$s（Flags: 0x%2$s）</string>
+    <string name="theme_install_online_source">URL：%1$s\n文件：%2$s（%3$d bytes）</string>
+    <string name="theme_install_online_failure">URL：%1$s\n原因：%2$s</string>
+    <string name="theme_install_error_detail">原因：%1$s</string>
 
     <!-- About -->
     <string name="about_title">关于</string>
@@ -133,6 +142,7 @@
     <string name="keep_alive_channel_desc">保持应用和无障碍服务运行，防止被系统清理</string>
     <string name="keep_alive_notification_title">ThemeStore 运行中</string>
     <string name="keep_alive_notification_content">安装:%1$d次 | 拦截:%2$d次</string>
+    <string name="keep_alive_notification_accessibility_disabled">无障碍已关闭</string>
     <string name="keep_alive_notification_permission_required">请先授予通知权限才能开启常驻通知保活</string>
 
     <string name="permission_shizuku_title">Shizuku 授权</string>

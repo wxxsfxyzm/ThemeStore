@@ -43,13 +43,25 @@ class ThemeInstallViewModel(
                 copyResult.fold(
                     onSuccess = {
                         val applied = installerManager.applyTheme(flags)
-                        if (applied) Result.success(true) else Result.failure(Exception("启动主题管理器失败"))
+                        if (applied) {
+                            Result.success(true)
+                        } else {
+                            Result.failure(Exception("Failed to start theme manager"))
+                        }
                     },
                     onFailure = { Result.failure(it) }
                 )
             }
 
-            handleInstallResult(context, result, "Local file: ${file.name} (Flags: 0x${flags.toString(16)})")
+            handleInstallResult(
+                context = context,
+                result = result,
+                sourceInfo = context.getString(
+                    R.string.theme_install_local_source,
+                    file.name,
+                    flags.toString(16).uppercase()
+                )
+            )
         }
     }
 
@@ -77,8 +89,13 @@ class ThemeInstallViewModel(
                 result.fold(
                     onSuccess = { file ->
                         LogFormatter.logThemeInstall(
-                            title = "在线主题安装成功",
-                            content = "URL: $url\n文件: ${file.name} (${file.length()} bytes)"
+                            title = context.getString(R.string.theme_install_success),
+                            content = context.getString(
+                                R.string.theme_install_online_source,
+                                url,
+                                file.name,
+                                file.length()
+                            )
                         )
 
                         withContext(Dispatchers.Main) {
@@ -90,12 +107,28 @@ class ThemeInstallViewModel(
                     },
                     onFailure = { error ->
                         Timber.e(error, "Online theme install failed")
+                        LogFormatter.logThemeInstall(
+                            title = context.getString(R.string.theme_install_failed),
+                            content = context.getString(
+                                R.string.theme_install_online_failure,
+                                url,
+                                error.message ?: error::class.java.simpleName
+                            )
+                        )
                         _installEvent.send(InstallEvent.ShowToast("${context.getString(R.string.download_failed)}: ${error.message}"))
                     }
                 )
 
             } catch (e: Exception) {
                 Timber.e(e, "Online install exception")
+                LogFormatter.logThemeInstall(
+                    title = context.getString(R.string.theme_install_failed),
+                    content = context.getString(
+                        R.string.theme_install_online_failure,
+                        url,
+                        e.message ?: e::class.java.simpleName
+                    )
+                )
                 _installEvent.send(InstallEvent.ShowToast("Error: ${e.message}"))
             } finally {
                 _isDownloading.value = false
@@ -118,9 +151,20 @@ class ThemeInstallViewModel(
                 _installEvent.send(InstallEvent.NavigateBack)
             },
             onFailure = { error ->
-                LogFormatter.logError(
-                    context.getString(R.string.theme_install_failed),
-                    error
+                Timber.e(error, "Theme install failed")
+                LogFormatter.logThemeInstall(
+                    title = context.getString(R.string.theme_install_failed),
+                    content = when (error.message) {
+                        "Failed to start theme manager" -> context.getString(R.string.theme_install_failed_starting_manager)
+                        "Source file does not exist" -> context.getString(R.string.theme_install_source_file_not_exist)
+                        "Source file cannot be read" -> context.getString(R.string.theme_install_source_file_not_readable)
+                        "File copy failed" -> context.getString(R.string.theme_install_file_copy_failed)
+                        "File download failed" -> context.getString(R.string.theme_install_file_download_failed)
+                        else -> context.getString(
+                            R.string.theme_install_error_detail,
+                            error.message ?: error::class.java.simpleName
+                        )
+                    }
                 )
                 _installEvent.send(InstallEvent.ShowToast(context.getString(R.string.copy_failed) + ": " + error.message))
             }

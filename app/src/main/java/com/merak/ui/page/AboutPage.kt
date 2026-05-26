@@ -79,7 +79,10 @@ import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 
 @Composable
-fun AboutPage(onBack: () -> Unit = {}) {
+fun AboutPage(
+    onBack: () -> Unit = {},
+    useBlur: Boolean
+) {
     val scrollBehavior = MiuixScrollBehavior()
     val lazyListState = rememberLazyListState()
     var logoHeightPx by remember { mutableIntStateOf(0) }
@@ -106,7 +109,6 @@ fun AboutPage(onBack: () -> Unit = {}) {
                 defaultWindowInsetsPadding = false,
                 navigationIcon = {
                     MiuixBackButton(
-                        modifier = Modifier.padding(start = 16.dp),
                         onClick = onBack
                     )
                 }
@@ -118,6 +120,7 @@ fun AboutPage(onBack: () -> Unit = {}) {
             lazyListState = lazyListState,
             scrollProgress = scrollProgress,
             scrollBehavior = scrollBehavior,
+            useBlur = useBlur,
             onLogoHeightChanged = { logoHeightPx = it }
         )
     }
@@ -129,6 +132,7 @@ private fun AboutContentBody(
     lazyListState: androidx.compose.foundation.lazy.LazyListState,
     scrollProgress: Float,
     scrollBehavior: ScrollBehavior,
+    useBlur: Boolean,
     onLogoHeightChanged: (Int) -> Unit
 ) {
     val layoutDirection = LocalLayoutDirection.current
@@ -137,7 +141,7 @@ private fun AboutContentBody(
     val uriHandler = LocalUriHandler.current
 
     // Background and effect configuration
-    val blurEnable = remember { isRenderEffectSupported() }
+    val blurEnable = useBlur && isRenderEffectSupported()
     val dynamicBackground = remember { isRuntimeShaderSupported() }
     val effectBackground = remember { isRuntimeShaderSupported() }
     val isOs3Effect = true

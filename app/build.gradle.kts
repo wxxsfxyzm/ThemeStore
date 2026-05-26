@@ -24,6 +24,10 @@ android {
         versionCode = 1
         versionName = "1.0"
 
+        ndk {
+            abiFilters += "arm64-v8a"
+        }
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -50,21 +54,12 @@ android {
     buildTypes {
         getByName("debug") {
             signingConfig = signingConfigs.getByName("debug")
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            optimization.enable = false
         }
 
         getByName("release") {
             signingConfig = signingConfigs.getByName("release")
-            isShrinkResources = true
-            isMinifyEnabled = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            optimization.enable = true
         }
     }
 
@@ -85,8 +80,7 @@ android {
         jniLibs {
             useLegacyPackaging = true
             excludes += setOf(
-                "lib/*/libandroidx.graphics.path.so",
-                "lib/*/libdatastore_shared_counter.so"
+                "lib/*/libandroidx.graphics.path.so"
             )
         }
     }
@@ -129,7 +123,6 @@ dependencies {
     implementation(libs.compose.materialIcons)
     // Preview support only for debug builds
     debugImplementation(libs.compose.ui.tooling)
-    debugImplementation(libs.compose.ui.test.manifest)
     debugImplementation(libs.compose.runtime.tracing)
 
     // implementation(libs.room.runtime)
@@ -159,10 +152,6 @@ dependencies {
     implementation(libs.miuix.preference)
     implementation(libs.miuix.icons)
     implementation(libs.miuix.navigation)
-
-    // haze
-    implementation(libs.haze)
-    implementation(libs.haze.materials)
 
     // materialKolor
     implementation(libs.materialKolor)

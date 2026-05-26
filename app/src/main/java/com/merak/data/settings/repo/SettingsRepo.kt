@@ -11,6 +11,7 @@ interface SettingsRepo {
 
     suspend fun setOnboardingCompleted(completed: Boolean)
     suspend fun setWelcomePageIndex(index: Int)
+    suspend fun setShizukuPrivilegedBootstrapCompleted(completed: Boolean)
     suspend fun setThemeMode(mode: ThemeMode)
     suspend fun setUseDynamicColor(use: Boolean)
     suspend fun setUseBlur(use: Boolean)

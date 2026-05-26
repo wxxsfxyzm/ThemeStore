@@ -7,7 +7,11 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.PixelFormat
 import android.util.Base64
+import android.view.Gravity
+import android.view.View
+import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityManager
 import com.merak.data.settings.repo.SettingsRepo
@@ -15,13 +19,12 @@ import com.merak.util.timber.LogFormatter
 import com.merak.x.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -31,10 +34,13 @@ import java.util.Date
 import java.util.Locale
 
 @SuppressLint("AccessibilityPolicy")
-class ThemeInstallAccessibilityService : AccessibilityService(), KoinComponent {
+open class ThemeInstallAccessibilityService : AccessibilityService(), KoinComponent {
 
     private val settingsRepo: SettingsRepo by inject()
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var aliveOverlayView: View? = null
+    private var watchdogJob: Job? = null
+    private val windowManager by lazy { getSystemService(WINDOW_SERVICE) as WindowManager }
 
     companion object {
         const val ACTION_SERVICE_UP = "com.merak.action_Service_UP"
@@ -54,15 +60,22 @@ class ThemeInstallAccessibilityService : AccessibilityService(), KoinComponent {
         private val _refreshEventFlow = MutableStateFlow(0L)
         val refreshEventFlow = _refreshEventFlow.asStateFlow()
 
+        private const val KEEP_ALIVE_RESTART_THROTTLE_MS = 1_000L
+
+        @Volatile
+        private var lastKeepAliveRestart = 0L
+
         @Volatile
         private var st_connectedTime = ""
+
         @Volatile
         private var st_receiveTime = ""
+
         @Volatile
         private var st_nextExpectedTime = ""
 
         fun isAccessibilityServiceEnabled(context: Context, clazz: Class<out AccessibilityService>): Boolean {
-            val am = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as? AccessibilityManager ?: return false
+            val am = context.getSystemService(ACCESSIBILITY_SERVICE) as? AccessibilityManager ?: return false
             val enabledServices = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
             val myComponentName = "${context.packageName}/${clazz.name}"
             return enabledServices.any {
@@ -73,6 +86,13 @@ class ThemeInstallAccessibilityService : AccessibilityService(), KoinComponent {
         fun isConnected(): Boolean = _isConnectedFlow.value
         fun requestRefresh() {
             _refreshEventFlow.value = System.currentTimeMillis()
+        }
+
+        private fun canRestartKeepAlive(): Boolean {
+            val now = System.currentTimeMillis()
+            if (now - lastKeepAliveRestart < KEEP_ALIVE_RESTART_THROTTLE_MS) return false
+            lastKeepAliveRestart = now
+            return true
         }
     }
 
@@ -90,7 +110,7 @@ class ThemeInstallAccessibilityService : AccessibilityService(), KoinComponent {
             try {
                 abortBroadcast()
             } catch (e: Exception) {
-                LogFormatter.logError("Intercept failed - Not an ordered broadcast?", e)
+                Timber.tag(TAG).e(e, "Intercept failed; broadcast may not be ordered")
             }
 
             val nowMillis = System.currentTimeMillis()
@@ -121,17 +141,10 @@ class ThemeInstallAccessibilityService : AccessibilityService(), KoinComponent {
 
     override fun onServiceConnected() {
         super.onServiceConnected()
-        val info = AccessibilityServiceInfo().apply {
-            eventTypes = AccessibilityEvent.TYPES_ALL_MASK
-            feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
-            notificationTimeout = 100
-            flags = AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
-        }
-        serviceInfo = info
-
         _isConnectedFlow.value = true
         st_connectedTime = dateFormat.format(Date())
 
+        addAliveOverlayView()
         sendServiceUpBroadcast()
         startWatchdog()
     }
@@ -142,18 +155,14 @@ class ThemeInstallAccessibilityService : AccessibilityService(), KoinComponent {
      * but settings indicate it should be running, the Anchor brings it back to life.
      */
     private fun startWatchdog() {
-        serviceScope.launch {
-            combine(
-                settingsRepo.appSettings,
-                KeepAliveService.isRunningFlow
-            ) { settings, isNotificationRunning ->
-                Pair(settings.isKeepAliveEnabled, isNotificationRunning)
-            }.collectLatest { (isEnabled, isRunning) ->
-                if (isEnabled && !isRunning) {
+        if (watchdogJob?.isActive == true) return
+        watchdogJob = serviceScope.launch {
+            settingsRepo.appSettings.collectLatest { settings ->
+                if (settings.isKeepAliveEnabled && !KeepAliveService.isServiceRunning(applicationContext)) {
                     Timber.tag(TAG).w("Watchdog triggered | KeepAliveService is dead. Resurrecting...")
-                    // 1-second delay prevents BackgroundServiceStartNotAllowedException loops
-                    delay(1000L)
-                    KeepAliveService.start(applicationContext)
+                    if (canRestartKeepAlive()) {
+                        KeepAliveService.start(applicationContext)
+                    }
                 }
             }
         }
@@ -164,15 +173,17 @@ class ThemeInstallAccessibilityService : AccessibilityService(), KoinComponent {
 
     override fun onUnbind(intent: Intent?): Boolean {
         _isConnectedFlow.value = false
+        removeAliveOverlayView()
         sendServiceDownBroadcast()
         return super.onUnbind(intent)
     }
 
     override fun onDestroy() {
         _isConnectedFlow.value = false
+        removeAliveOverlayView()
         try {
             unregisterReceiver(mBroadcastReceiver)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
         }
         serviceScope.cancel()
         super.onDestroy()
@@ -181,14 +192,48 @@ class ThemeInstallAccessibilityService : AccessibilityService(), KoinComponent {
     private fun sendServiceUpBroadcast() {
         try {
             sendBroadcast(Intent(ACTION_SERVICE_UP).apply { setPackage(packageName) })
-        } catch (e: Exception) {
+        } catch (_: Exception) {
         }
     }
 
     private fun sendServiceDownBroadcast() {
         try {
             sendBroadcast(Intent(ACTION_SERVICE_DOWN).apply { setPackage(packageName) })
-        } catch (e: Exception) {
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun addAliveOverlayView() {
+        removeAliveOverlayView()
+        val view = View(this)
+        val params = WindowManager.LayoutParams().apply {
+            type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
+            format = PixelFormat.TRANSLUCENT
+            flags = flags or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+            gravity = Gravity.START or Gravity.TOP
+            width = 1
+            height = 1
+            packageName = this@ThemeInstallAccessibilityService.packageName
+        }
+        try {
+            windowManager.addView(view, params)
+            aliveOverlayView = view
+            Timber.tag(TAG).d("Accessibility alive overlay attached")
+        } catch (e: Throwable) {
+            aliveOverlayView = null
+            Timber.tag(TAG).e(e, "Failed to attach accessibility alive overlay")
+        }
+    }
+
+    private fun removeAliveOverlayView() {
+        val view = aliveOverlayView ?: return
+        aliveOverlayView = null
+        try {
+            windowManager.removeView(view)
+        } catch (e: Throwable) {
+            Timber.tag(TAG).e(e, "Failed to remove accessibility alive overlay")
         }
     }
 }

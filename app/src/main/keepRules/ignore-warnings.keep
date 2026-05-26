@@ -1,0 +1,6 @@
+# Ignore warnings for hidden Android framework classes accessed through stubs or reflection.
+-dontwarn android.app.ContextImpl
+-dontwarn android.app.LoadedApk
+
+# HiddenApiBypass references this optional JVM instrumentation API.
+-dontwarn java.lang.instrument.ClassFileTransformer

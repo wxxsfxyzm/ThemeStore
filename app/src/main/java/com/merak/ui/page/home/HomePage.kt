@@ -35,12 +35,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import com.merak.ui.components.OnLifecycleEvent
 import com.merak.ui.theme.getMiuixAppBarColor
-import com.merak.ui.theme.rememberMiuixHazeStyle
-import com.merak.ui.theme.tsHazeEffect
+import com.merak.ui.theme.rememberMiuixBlurBackdrop
+import com.merak.ui.theme.tsMiuixBlurEffect
 import com.merak.util.toast
 import com.merak.x.R
-import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeSource
 import org.koin.androidx.compose.koinViewModel
 import rikka.shizuku.Shizuku
 import top.yukonga.miuix.kmp.basic.Card
@@ -50,6 +48,7 @@ import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TopAppBar
+import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.preference.ArrowPreference as SuperArrow
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.overScrollVertical
@@ -60,13 +59,12 @@ fun HomePage(
     onNavigateToThemeInstall: () -> Unit,
     onNavigateToLog: () -> Unit,
     viewModel: HomeViewModel = koinViewModel(),
-    hazeState: HazeState?,
+    enableBlur: Boolean,
     outerPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val scrollBehavior = MiuixScrollBehavior()
-    val hazeStyle = rememberMiuixHazeStyle()
 
     OnLifecycleEvent(Lifecycle.Event.ON_RESUME) {
         viewModel.refreshState()
@@ -103,11 +101,13 @@ fun HomePage(
         }
     }
 
+    val blurBackdrop = rememberMiuixBlurBackdrop(enableBlur)
+
     Scaffold(
         topBar = {
             TopAppBar(
-                modifier = Modifier.tsHazeEffect(hazeState, hazeStyle),
-                color = hazeState.getMiuixAppBarColor(),
+                modifier = Modifier.tsMiuixBlurEffect(blurBackdrop),
+                color = blurBackdrop.getMiuixAppBarColor(),
                 title = stringResource(R.string.title_home),
                 scrollBehavior = scrollBehavior
             )
@@ -116,7 +116,7 @@ fun HomePage(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .then(hazeState?.let { Modifier.hazeSource(it) } ?: Modifier)
+                .then(blurBackdrop?.let { Modifier.layerBackdrop(it) } ?: Modifier)
                 .overScrollVertical()
                 .scrollEndHaptic()
                 .nestedScroll(scrollBehavior.nestedScrollConnection),

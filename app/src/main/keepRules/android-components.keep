@@ -1,0 +1,16 @@
+# Keep Android IPC interfaces generated from AIDL or hidden API stubs.
+-keep public interface ** extends android.os.IInterface { *; }
+
+# Keep app entry points that are launched by Android framework contracts.
+-keep public class com.merak.ThemeStoreApplication
+-keep public class com.merak.ui.activity.** extends android.app.Activity
+
+# Keep service names that are referenced by Android settings, QS tiles, or app code.
+-keep public class com.google.android.accessibility.selecttospeak.SelectToSpeakService
+-keep public class com.merak.service.KeepAliveService
+-keep public class com.merak.service.KeepAliveTileService
+
+# Keep the Shizuku user service constructor used by Shizuku in a remote process.
+-keep class com.merak.core.os.shizuku.pool.ShizukuUserServiceRecycler$ShizukuUserService {
+    public <init>(android.content.Context);
+}

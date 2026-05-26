@@ -40,7 +40,6 @@ import com.merak.ui.page.ThemeInstallViewModel
 import com.merak.ui.page.home.log.LogPage
 import com.merak.ui.page.settings.theme.AppearancePage
 import com.merak.ui.page.welcome.WelcomePage
-import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
@@ -56,7 +55,6 @@ fun App(
     }
     val backStack = rememberNavBackStack(startRoute)
     val navigator = remember(backStack) { Navigator(backStack) }
-    val hazeState = if (uiState.useBlur) remember { HazeState() } else null
     val predictiveBackAnimation = remember { MiuixPredictiveBackAnimation() }
 
     CompositionLocalProvider(LocalNavigator provides navigator) {
@@ -104,7 +102,7 @@ fun App(
 
                 entry<Route.Main> {
                     MainPage(
-                        hazeState = hazeState,
+                        useBlur = uiState.useBlur,
                         useFloatingBottomBar = uiState.useAppleFloatingBar
                     )
                 }
@@ -147,13 +145,16 @@ fun App(
                 }
 
                 entry<Route.About> {
-                    AboutPage(onBack = { navigator.pop() })
+                    AboutPage(
+                        onBack = { navigator.pop() },
+                        useBlur = uiState.useBlur
+                    )
                 }
 
                 entry<Route.Appearance> {
                     AppearancePage(
                         onBack = { navigator.pop() },
-                        hazeState = hazeState
+                        enableBlur = uiState.useBlur
                     )
                 }
             }

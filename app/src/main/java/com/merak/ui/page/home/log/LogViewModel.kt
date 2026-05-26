@@ -15,6 +15,7 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import timber.log.Timber
 
 // Statistics data model
 data class LogStatistics(
@@ -117,7 +118,7 @@ class LogViewModel(
                 currentEntryBuilder?.let { allEntries.add(it.build()) }
 
             } catch (e: Exception) {
-                e.printStackTrace()
+                Timber.tag(TAG).e(e, "Failed to read log file: %s", file.absolutePath)
             }
         }
 
@@ -237,5 +238,9 @@ class LogViewModel(
         } catch (e: Exception) {
             return null
         }
+    }
+
+    private companion object {
+        const val TAG = "LogViewModel"
     }
 }

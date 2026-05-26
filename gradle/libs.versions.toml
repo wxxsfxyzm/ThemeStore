@@ -13,7 +13,6 @@ kotlin = "2.3.21"
 ksp = "2.3.8"
 composeBom = "2026.05.01"
 compose = "1.11.2"
-haze = "1.7.2"
 splashScreen = "1.2.0"
 material3 = "1.5.0-alpha20"
 room = "3.0.0-alpha05"
@@ -48,8 +47,6 @@ androidx-datastore-preferences = { group = "androidx.datastore", name = "datasto
 androix-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "splashScreen" }
 
 materialKolor = { module = "com.materialkolor:material-kolor", version.ref = "materialKolor" }
-haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
-haze-materials = { module = "dev.chrisbanes.haze:haze-materials", version.ref = "haze" }
 compose-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "compose" }
 compose-ui-graphics = { module = "androidx.compose.ui:ui-graphics", version.ref = "compose" }
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "compose" }

@@ -9,8 +9,10 @@ import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.accessibility.selecttospeak.SelectToSpeakService
 import com.merak.core.os.shizuku.AutoAccessibilityManager
 import com.merak.core.os.shizuku.PrivilegedManager
+import com.merak.data.settings.repo.SettingsRepo
 import com.merak.service.KeepAliveService
 import com.merak.service.ThemeInstallAccessibilityService
 import kotlinx.coroutines.Dispatchers
@@ -18,10 +20,13 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import rikka.shizuku.Shizuku
+import timber.log.Timber
 
 // Define UI side effects
 sealed interface HomeSideEffect {
@@ -42,7 +47,8 @@ data class HomeUiState(
 class HomeViewModel(
     private val context: Application,
     private val privilegedManager: PrivilegedManager,
-    private val autoAccessibilityManager: AutoAccessibilityManager
+    private val autoAccessibilityManager: AutoAccessibilityManager,
+    private val settingsRepo: SettingsRepo
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -50,12 +56,14 @@ class HomeViewModel(
 
     private val _effect = Channel<HomeSideEffect>(Channel.BUFFERED)
     val effect = _effect.receiveAsFlow()
+    private var hasGrantedPrivilegedSelfPermissions = false
+    private var isPrivilegedBootstrapRunning = false
+    private var accessibilityConnectionKnown = ThemeInstallAccessibilityService.isConnected()
 
     // Event 1: Listen for Shizuku permission grant
     private val shizukuPermissionListener = Shizuku.OnRequestPermissionResultListener { _, result ->
         if (result == PackageManager.PERMISSION_GRANTED) {
-            // Trigger auto-enable immediately upon permission grant
-            autoAccessibilityManager.runCheck()
+            runPrivilegedSetupAfterAuthorization()
         }
         refreshState()
     }
@@ -64,9 +72,25 @@ class HomeViewModel(
     private val serviceLifecycleReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
-                ThemeInstallAccessibilityService.ACTION_SERVICE_UP,
+                ThemeInstallAccessibilityService.ACTION_SERVICE_UP -> {
+                    accessibilityConnectionKnown = true
+                    Timber.tag(TAG).d("Accessibility broadcast: UP")
+                    _uiState.update { it.copy(isAccessibilityEnabled = true) }
+                    refreshState("accessibility_up_broadcast")
+                }
                 ThemeInstallAccessibilityService.ACTION_SERVICE_DOWN -> {
-                    refreshState()
+                    accessibilityConnectionKnown = false
+                    Timber.tag(TAG).d("Accessibility broadcast: DOWN")
+                    _uiState.update { it.copy(isAccessibilityEnabled = false) }
+                    refreshState("accessibility_down_broadcast")
+                }
+                KeepAliveService.ACTION_STATE_CHANGED -> {
+                    val isRunning = intent.getBooleanExtra(
+                        KeepAliveService.EXTRA_IS_RUNNING,
+                        KeepAliveService.isServiceRunning(this@HomeViewModel.context)
+                    )
+                    Timber.tag(TAG).d("KeepAlive broadcast: running=%s", isRunning)
+                    _uiState.update { it.copy(isKeepAliveRunning = isRunning) }
                 }
             }
         }
@@ -84,6 +108,7 @@ class HomeViewModel(
         val filter = IntentFilter().apply {
             addAction(ThemeInstallAccessibilityService.ACTION_SERVICE_UP)
             addAction(ThemeInstallAccessibilityService.ACTION_SERVICE_DOWN)
+            addAction(KeepAliveService.ACTION_STATE_CHANGED)
         }
         ContextCompat.registerReceiver(
             context,
@@ -92,17 +117,74 @@ class HomeViewModel(
             ContextCompat.RECEIVER_NOT_EXPORTED
         )
 
-        // Observe the running state of the KeepAliveService directly from its flow
-        viewModelScope.launch {
-            KeepAliveService.isRunningFlow.collect { running ->
-                _uiState.update { it.copy(isKeepAliveRunning = running) }
-            }
-        }
-
         // Event 3: Initialize Shizuku binder listener only when UI is active
         autoAccessibilityManager.init()
 
-        refreshState()
+        viewModelScope.launch {
+            ThemeInstallAccessibilityService.isConnectedFlow.collectLatest { isConnected ->
+                accessibilityConnectionKnown = isConnected
+                Timber.tag(TAG).d("Accessibility flow: connected=%s", isConnected)
+                _uiState.update { it.copy(isAccessibilityEnabled = isConnected || it.isAccessibilityEnabled) }
+                if (!isConnected) refreshState("accessibility_flow_disconnected")
+            }
+        }
+
+        viewModelScope.launch {
+            KeepAliveService.isRunningFlow.collectLatest { isRunning ->
+                Timber.tag(TAG).d("KeepAlive flow: running=%s", isRunning)
+                _uiState.update { it.copy(isKeepAliveRunning = isRunning) }
+            }
+        }
+
+        refreshState("init")
+    }
+
+    private fun runPrivilegedSetupAfterAuthorization() {
+        if (isPrivilegedBootstrapRunning) return
+        isPrivilegedBootstrapRunning = true
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val settings = settingsRepo.appSettings.first()
+                if (settings.isShizukuPrivilegedBootstrapCompleted) {
+                    grantPrivilegedSelfPermissionsIfNeeded()
+                    return@launch
+                }
+
+                val completed = privilegedManager.runPrivilegedBootstrap()
+                if (completed) {
+                    hasGrantedPrivilegedSelfPermissions = true
+                    settingsRepo.setShizukuPrivilegedBootstrapCompleted(true)
+                    delay(500L)
+                    refreshState("privileged_bootstrap_completed")
+                } else {
+                    hasGrantedPrivilegedSelfPermissions = false
+                }
+            } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Failed to run privileged setup after Shizuku authorization")
+                hasGrantedPrivilegedSelfPermissions = false
+            } finally {
+                isPrivilegedBootstrapRunning = false
+            }
+        }
+    }
+
+    private fun grantPrivilegedSelfPermissionsIfNeeded() {
+        if (hasGrantedPrivilegedSelfPermissions) return
+        val granted = privilegedManager.grantStorageAndNotificationPermissions()
+        if (granted) {
+            hasGrantedPrivilegedSelfPermissions = true
+        }
+    }
+
+    private fun grantPrivilegedSelfPermissions() {
+        if (hasGrantedPrivilegedSelfPermissions) return
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                grantPrivilegedSelfPermissionsIfNeeded()
+            } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Failed to grant privileged self permissions")
+            }
+        }
     }
 
     // Handle clicks on the accessibility status card
@@ -110,16 +192,20 @@ class HomeViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             val currentState = _uiState.value
 
-            // Attempt to enable automatically via Shizuku if authorized
-            if (!currentState.isAccessibilityEnabled && currentState.isShizukuAuthorized) {
+            if (currentState.isShizukuAuthorized) {
+                val targetEnabled = !currentState.isAccessibilityEnabled
                 try {
-                    privilegedManager.setAccessibilityServiceState(true)
-                    _effect.send(HomeSideEffect.ShowToast("Attempting to start service via Shizuku..."))
+                    privilegedManager.setAccessibilityServiceState(targetEnabled)
+                    if (!targetEnabled) {
+                        accessibilityConnectionKnown = false
+                        _uiState.update { it.copy(isAccessibilityEnabled = false) }
+                        refreshState("toggle_disable")
+                        return@launch
+                    }
 
-                    // Poll briefly to await the background service startup
                     repeat(6) {
                         delay(500)
-                        refreshState()
+                        refreshState("toggle_poll")
                         if (_uiState.value.isAccessibilityEnabled) {
                             return@launch
                         }
@@ -131,12 +217,11 @@ class HomeViewModel(
                     }
 
                 } catch (e: Exception) {
-                    e.printStackTrace()
-                    _effect.send(HomeSideEffect.ShowToast("Shizuku start failed, please enable manually"))
+                    Timber.tag(TAG).e(e, "Failed to toggle accessibility service via Shizuku")
+                    _effect.send(HomeSideEffect.ShowToast("Shizuku operation failed, please change manually"))
                     _effect.send(HomeSideEffect.OpenAccessibilitySettings)
                 }
             } else {
-                // Navigate to system settings if Shizuku is unavailable
                 _effect.send(HomeSideEffect.OpenAccessibilitySettings)
             }
         }
@@ -162,11 +247,11 @@ class HomeViewModel(
         }
     }
 
-    fun refreshState() {
+    fun refreshState(reason: String = "manual") {
         viewModelScope.launch(Dispatchers.IO) {
-            val accessibility = ThemeInstallAccessibilityService.isAccessibilityServiceEnabled(
+            val accessibilityEnabledInSystem = ThemeInstallAccessibilityService.isAccessibilityServiceEnabled(
                 context,
-                ThemeInstallAccessibilityService::class.java
+                SelectToSpeakService::class.java
             )
 
             val shizukuAvailable = try {
@@ -184,14 +269,36 @@ class HomeViewModel(
             } else {
                 false
             }
+            if (shizukuAuthorized) {
+                runPrivilegedSetupAfterAuthorization()
+            }
 
-            // Sync KeepAlive status manually once for initialization
-            val keepAliveRunning = KeepAliveService.isRunningFlow.value
+            val settings = settingsRepo.appSettings.first()
+            var keepAliveRunning = KeepAliveService.isServiceRunning(context)
+            if (settings.isKeepAliveEnabled && !keepAliveRunning) {
+                KeepAliveService.start(context)
+                delay(300L)
+                keepAliveRunning = KeepAliveService.isServiceRunning(context)
+            }
+
+            val finalAccessibilityConnected = accessibilityConnectionKnown ||
+                    ThemeInstallAccessibilityService.isConnected()
+            val finalAccessibility = finalAccessibilityConnected || accessibilityEnabledInSystem
+
+            Timber.tag(TAG).d(
+                "refreshState(%s): a11yConnected=%s, a11yEnabledInSystem=%s, keepAlive=%s, shizukuAvailable=%s, shizukuAuthorized=%s",
+                reason,
+                finalAccessibilityConnected,
+                accessibilityEnabledInSystem,
+                keepAliveRunning,
+                shizukuAvailable,
+                shizukuAuthorized
+            )
 
             // Update state flow to trigger UI recomposition
             _uiState.update { state ->
                 state.copy(
-                    isAccessibilityEnabled = accessibility,
+                    isAccessibilityEnabled = finalAccessibility,
                     isShizukuAvailable = shizukuAvailable,
                     isShizukuAuthorized = shizukuAuthorized,
                     isKeepAliveRunning = keepAliveRunning
@@ -212,5 +319,9 @@ class HomeViewModel(
         } catch (e: Exception) {
             // Ignore
         }
+    }
+
+    private companion object {
+        const val TAG = "HomeViewModel"
     }
 }

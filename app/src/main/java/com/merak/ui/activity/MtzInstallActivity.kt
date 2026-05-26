@@ -30,6 +30,7 @@ import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.component.KoinComponent
+import timber.log.Timber
 
 class MtzInstallActivity : ComponentActivity(), KoinComponent {
 
@@ -129,9 +130,10 @@ class MtzInstallActivity : ComponentActivity(), KoinComponent {
                         LogFormatter.logThemeInstall(
                             title = this@MtzInstallActivity.getString(R.string.theme_install_success),
                             content = this@MtzInstallActivity.getString(
-                                R.string.theme_install_source,
-                                uri.getFileName()
-                            ) + " (Flags: 0x${flags.toString(16)})"
+                                R.string.theme_install_source_with_flags,
+                                uri.getFileName(),
+                                flags.toString(16).uppercase()
+                            )
                         )
 
                         // Request notification refresh
@@ -142,16 +144,22 @@ class MtzInstallActivity : ComponentActivity(), KoinComponent {
                         }
                     } else {
                         this@MtzInstallActivity.toast(R.string.theme_install_failed_starting_manager)
-                        LogFormatter.logError(
-                            title = this@MtzInstallActivity.getString(R.string.theme_install_failed_starting_manager),
+                        Timber.e("Theme manager did not accept the apply request")
+                        LogFormatter.logThemeInstall(
+                            title = this@MtzInstallActivity.getString(R.string.theme_install_failed),
+                            content = this@MtzInstallActivity.getString(R.string.theme_install_failed_starting_manager)
                         )
                     }
                 },
                 onFailure = { error ->
                     this@MtzInstallActivity.toast(this@MtzInstallActivity.getString(R.string.theme_install_failed_handle_file, error.message))
-                    LogFormatter.logError(
-                        title = this@MtzInstallActivity.getString(R.string.theme_install_failed_handle_file, uri.toString()),
-                        e = error
+                    Timber.e(error, "Theme install failed while handling URI")
+                    LogFormatter.logThemeInstall(
+                        title = this@MtzInstallActivity.getString(R.string.theme_install_failed),
+                        content = this@MtzInstallActivity.getString(
+                            R.string.theme_install_failed_handle_file,
+                            uri.toString()
+                        )
                     )
                 }
             )
@@ -176,7 +184,7 @@ class MtzInstallActivity : ComponentActivity(), KoinComponent {
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Timber.e(e, "Failed to resolve display name from URI")
         }
 
         // Fallback to the last segment of the path if the query fails

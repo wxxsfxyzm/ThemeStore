@@ -46,17 +46,15 @@ import androidx.compose.ui.unit.dp
 import com.merak.ui.components.MiuixBackButton
 import com.merak.ui.components.MiuixSwitchWidget
 import com.merak.ui.theme.getMiuixAppBarColor
+import com.merak.ui.theme.rememberMiuixBlurBackdrop
 import com.merak.ui.theme.material.PaletteStyle
 import com.merak.ui.theme.material.RawColor
 import com.merak.ui.theme.material.ThemeColorSpec
 import com.merak.ui.theme.material.ThemeMode
 import com.merak.ui.theme.material.dynamicColorScheme
-import com.merak.ui.theme.rememberMiuixHazeStyle
-import com.merak.ui.theme.tsHazeEffect
+import com.merak.ui.theme.tsMiuixBlurEffect
 import com.merak.ui.util.getDisplayName
 import com.merak.x.R
-import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeSource
 import org.koin.androidx.compose.koinViewModel
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.Icon
@@ -66,6 +64,7 @@ import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.DropdownItem
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TopAppBar
+import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.preference.WindowSpinnerPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.overScrollVertical
@@ -74,21 +73,21 @@ import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 @Composable
 fun AppearancePage(
     onBack: () -> Unit,
-    hazeState: HazeState?,
+    enableBlur: Boolean,
     viewModel: AppearanceViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
     val scrollBehavior = MiuixScrollBehavior()
-    val hazeStyle = rememberMiuixHazeStyle()
+    val blurBackdrop = rememberMiuixBlurBackdrop(enableBlur)
 
     Scaffold(
         topBar = {
             TopAppBar(
-                modifier = Modifier.tsHazeEffect(hazeState, hazeStyle),
-                color = hazeState.getMiuixAppBarColor(),
+                modifier = Modifier.tsMiuixBlurEffect(blurBackdrop),
+                color = blurBackdrop.getMiuixAppBarColor(),
                 title = stringResource(R.string.theme_settings),
                 navigationIcon = {
-                    MiuixBackButton(modifier = Modifier.padding(start = 16.dp), onClick = onBack)
+                    MiuixBackButton(onClick = onBack)
                 },
                 scrollBehavior = scrollBehavior
             )
@@ -97,7 +96,7 @@ fun AppearancePage(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .then(hazeState?.let { Modifier.hazeSource(it) } ?: Modifier)
+                .then(blurBackdrop?.let { Modifier.layerBackdrop(it) } ?: Modifier)
                 .scrollEndHaptic()
                 .overScrollVertical()
                 .nestedScroll(scrollBehavior.nestedScrollConnection),

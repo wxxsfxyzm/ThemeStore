@@ -13,9 +13,24 @@
     <uses-permission
         android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
         tools:ignore="AllFilesAccessPolicy,ScopedStorage" />
+    <uses-permission
+        android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="PackageVisibilityPolicy,QueryAllPackagesPermission" />
+    <uses-permission android:name="com.android.permission.GET_INSTALLED_APPS" />
+    <uses-permission
+        android:name="android.permission.REQUEST_INSTALL_PACKAGES"
+        tools:ignore="RequestInstallPackagesPolicy" />
 
     <!-- 通知权限 (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission
+        android:name="android.permission.WRITE_SECURE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission
+        android:name="android.permission.GET_APP_OPS_STATS"
+        tools:ignore="ProtectedPermissions" />
 
     <!-- 前台服务权限 -->
     <uses-permission
@@ -39,12 +54,14 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
+        android:testOnly="false"
         android:usesCleartextTraffic="true"
         android:theme="@style/Theme.ThemeStore">
 
         <activity
             android:name="com.merak.ui.activity.MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -101,15 +118,13 @@
         -->
         <!-- 
             广播拦截服务（优先级最高，防止无障碍权限被关闭）
-            运行在独立进程，使用前台服务保活
+            与保活通知服务运行在同一进程，复用无障碍绑定托住前台通知
         -->
         <service
-            android:name="com.merak.service.ThemeInstallAccessibilityService"
+            android:name="com.google.android.accessibility.selecttospeak.SelectToSpeakService"
             android:exported="false"
             android:label="@string/accessibility_service_label"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
-            android:process=":alarm_intercept"
-            android:foregroundServiceType="specialUse"
             tools:ignore="AccessibilityPolicy">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
@@ -117,21 +132,34 @@
             <meta-data
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibility_service_config" />
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="accessibility_keep_alive" />
         </service>
 
         <!-- 主进程保活服务（仅在用户启用时运行） -->
         <service
             android:name="com.merak.service.KeepAliveService"
-            android:enabled="true"
             android:exported="false"
-            android:process=":alarm_intercept"
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="main_keep_alive" />
+                android:value="Display the running state of the application" />
+        </service>
+
+        <service
+            android:name="com.merak.service.KeepAliveTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_notification"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <meta-data
+                android:name="android.service.quicksettings.TOGGLEABLE_TILE"
+                android:value="true" />
+            <meta-data
+                android:name="QS_TILE_URI"
+                android:value="themestore://page" />
+
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
         </service>
 
         <provider
@@ -143,4 +171,9 @@
             android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
     </application>
 
+    <overlay
+        android:isStatic="true"
+        android:requiredSystemPropertyName="ro.miui.build.region"
+        android:requiredSystemPropertyValue="cn"
+        android:targetPackage="com.merak.x" />
 </manifest>

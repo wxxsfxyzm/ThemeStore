@@ -1,0 +1,6 @@
+# Drop low-value platform log calls from optimized builds.
+-assumenosideeffects class android.util.Log {
+    public static *** d(...);
+    public static *** v(...);
+    public static *** i(...);
+}

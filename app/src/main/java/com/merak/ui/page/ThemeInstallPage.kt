@@ -78,7 +78,6 @@ fun ThemeInstallPage(
                 scrollBehavior = scrollBehavior,
                 navigationIcon = {
                     MiuixBackButton(
-                        modifier = Modifier.padding(start = 16.dp),
                         onClick = onBack
                     )
                 }
