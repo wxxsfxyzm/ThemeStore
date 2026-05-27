@@ -32,6 +32,10 @@ class AppDataStore(
 
         val KEEP_ALIVE_ENABLED = booleanPreferencesKey("keep_alive_enabled")
         val OPTIMIZATION_MODE_ENABLED = booleanPreferencesKey("optimization_mode_enabled")
+        val ACCESSIBILITY_PINNED_SERVICES = stringPreferencesKey("accessibility_pinned_services")
+        val ACCESSIBILITY_DAEMON_SERVICES = stringPreferencesKey("accessibility_daemon_services")
+        val ACCESSIBILITY_DAEMON_BOOT_ENABLED = booleanPreferencesKey("accessibility_daemon_boot_enabled")
+        val ACCESSIBILITY_DAEMON_TOAST_ENABLED = booleanPreferencesKey("accessibility_daemon_toast_enabled")
 
     }
 

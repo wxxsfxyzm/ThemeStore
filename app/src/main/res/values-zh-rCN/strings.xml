@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">ThemeStoreX</string>
     <string name="title_home">首页</string>
+    <string name="title_accessibility_manager">无障碍</string>
     <string name="title_settings">设置</string>
     <string name="home_install_title">主题安装</string>
     <string name="home_install_summary">安装本地/在线主题包</string>
@@ -144,6 +145,33 @@
     <string name="keep_alive_notification_content">安装:%1$d次 | 拦截:%2$d次</string>
     <string name="keep_alive_notification_accessibility_disabled">无障碍已关闭</string>
     <string name="keep_alive_notification_permission_required">请先授予通知权限才能开启常驻通知保活</string>
+
+    <!-- 无障碍管理 -->
+    <string name="accessibility_permission_required">请先授予权限</string>
+    <string name="accessibility_operation_failed">操作失败</string>
+    <string name="accessibility_empty">未找到无障碍服务</string>
+    <string name="accessibility_no_description">该服务没有描述</string>
+    <string name="accessibility_service_list_title">服务列表</string>
+    <string name="accessibility_daemon_settings_title">保活设置</string>
+    <string name="accessibility_daemon_boot">开机启动保活</string>
+    <string name="accessibility_daemon_boot_summary">设备启动后恢复已选择的无障碍服务</string>
+    <string name="accessibility_daemon_toast">显示保活提示</string>
+    <string name="accessibility_daemon_toast_summary">恢复服务时显示短提示</string>
+    <string name="accessibility_daemon_enabled">保活已开</string>
+    <string name="accessibility_daemon_disabled">保活未开</string>
+    <string name="accessibility_pin">置顶</string>
+    <string name="accessibility_unpin">取消置顶</string>
+    <string name="accessibility_detail_title">服务详细信息</string>
+    <string name="accessibility_detail_class">服务类名</string>
+    <string name="accessibility_detail_capabilities">特殊能力</string>
+    <string name="accessibility_detail_scope">生效范围</string>
+    <string name="accessibility_detail_feedback">反馈方式</string>
+    <string name="accessibility_detail_events">捕获事件类型</string>
+    <string name="accessibility_detail_flags">特殊标志</string>
+    <string name="accessibility_daemon_channel_name">无障碍保活</string>
+    <string name="accessibility_daemon_notification_title">无障碍保活运行中</string>
+    <string name="accessibility_daemon_notification_content">已选择的无障碍服务被关闭时会自动恢复</string>
+    <string name="accessibility_daemon_restored_toast">已保活 %1$s</string>
 
     <string name="permission_shizuku_title">Shizuku 授权</string>
     <string name="permission_shizuku_desc">用于执行无需 Root 的高级系统操作</string>

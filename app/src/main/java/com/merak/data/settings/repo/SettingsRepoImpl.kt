@@ -40,7 +40,17 @@ class SettingsRepoImpl(
                 useBlur = prefs[AppDataStore.UI_USE_BLUR] ?: true,
                 useAppleFloatingBar = prefs[AppDataStore.UI_USE_APPLE_FLOATING_BAR] ?: false,
                 isKeepAliveEnabled = prefs[AppDataStore.KEEP_ALIVE_ENABLED] ?: false,
-                isOptimizationModeEnabled = prefs[AppDataStore.OPTIMIZATION_MODE_ENABLED] ?: false
+                isOptimizationModeEnabled = prefs[AppDataStore.OPTIMIZATION_MODE_ENABLED] ?: false,
+                accessibilityPinnedServices = decodeServiceList(
+                    prefs[AppDataStore.ACCESSIBILITY_PINNED_SERVICES]
+                ),
+                accessibilityDaemonServices = decodeServiceList(
+                    prefs[AppDataStore.ACCESSIBILITY_DAEMON_SERVICES]
+                ).toSet(),
+                isAccessibilityDaemonBootEnabled =
+                    prefs[AppDataStore.ACCESSIBILITY_DAEMON_BOOT_ENABLED] ?: true,
+                isAccessibilityDaemonToastEnabled =
+                    prefs[AppDataStore.ACCESSIBILITY_DAEMON_TOAST_ENABLED] ?: true
             )
         }.shareIn(
         scope = appScope,
@@ -94,5 +104,29 @@ class SettingsRepoImpl(
 
     override suspend fun setKeepAliveEnabled(enabled: Boolean) {
         dataStore.putBoolean(AppDataStore.KEEP_ALIVE_ENABLED, enabled)
+    }
+
+    override suspend fun setAccessibilityPinnedServices(serviceIds: List<String>) {
+        dataStore.putString(AppDataStore.ACCESSIBILITY_PINNED_SERVICES, encodeServiceList(serviceIds))
+    }
+
+    override suspend fun setAccessibilityDaemonServices(serviceIds: Set<String>) {
+        dataStore.putString(AppDataStore.ACCESSIBILITY_DAEMON_SERVICES, encodeServiceList(serviceIds.toList()))
+    }
+
+    override suspend fun setAccessibilityDaemonBootEnabled(enabled: Boolean) {
+        dataStore.putBoolean(AppDataStore.ACCESSIBILITY_DAEMON_BOOT_ENABLED, enabled)
+    }
+
+    override suspend fun setAccessibilityDaemonToastEnabled(enabled: Boolean) {
+        dataStore.putBoolean(AppDataStore.ACCESSIBILITY_DAEMON_TOAST_ENABLED, enabled)
+    }
+
+    private fun encodeServiceList(serviceIds: List<String>): String {
+        return serviceIds.filter { it.isNotBlank() }.distinct().joinToString("\n")
+    }
+
+    private fun decodeServiceList(value: String?): List<String> {
+        return value.orEmpty().lineSequence().map { it.trim() }.filter { it.isNotEmpty() }.distinct().toList()
     }
 }

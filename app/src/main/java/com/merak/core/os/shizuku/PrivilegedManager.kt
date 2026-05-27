@@ -62,8 +62,12 @@ class PrivilegedManager(private val context: Context) {
     }
 
     fun setAccessibilityServiceState(enabled: Boolean): Boolean {
-        ShizukuProvider.requestBinderForNonProviderProcess(context)
         val componentName = ComponentName(context, SelectToSpeakService::class.java)
+        return setAccessibilityServiceState(componentName, enabled)
+    }
+
+    fun setAccessibilityServiceState(componentName: ComponentName, enabled: Boolean): Boolean {
+        ShizukuProvider.requestBinderForNonProviderProcess(context)
         var success = false
 
         useShizukuUserService(true) { userService ->

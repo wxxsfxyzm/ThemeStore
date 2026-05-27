@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">ThemeStoreX</string>
     <string name="title_home">Home</string>
+    <string name="title_accessibility_manager">Accessibility</string>
     <string name="title_settings">Settings</string>
     <string name="home_install_title">Theme Install</string>
     <string name="home_install_summary">Install local/online theme package</string>
@@ -142,6 +143,33 @@
     <string name="keep_alive_notification_content">Installed:%1$d | Intercepted:%2$d</string>
     <string name="keep_alive_notification_accessibility_disabled">Accessibility service disabled</string>
     <string name="keep_alive_notification_permission_required">Please grant notification permission before enabling keep-alive</string>
+
+    <!-- Accessibility Manager -->
+    <string name="accessibility_permission_required">请先授予权限</string>
+    <string name="accessibility_operation_failed">Operation failed</string>
+    <string name="accessibility_empty">No accessibility services found</string>
+    <string name="accessibility_no_description">No description</string>
+    <string name="accessibility_service_list_title">Services</string>
+    <string name="accessibility_daemon_settings_title">Keep Alive</string>
+    <string name="accessibility_daemon_boot">Start after boot</string>
+    <string name="accessibility_daemon_boot_summary">Restore selected services after device boot</string>
+    <string name="accessibility_daemon_toast">Show restore toast</string>
+    <string name="accessibility_daemon_toast_summary">Show a short message when a selected service is restored</string>
+    <string name="accessibility_daemon_enabled">Keep alive on</string>
+    <string name="accessibility_daemon_disabled">Keep alive off</string>
+    <string name="accessibility_pin">Pin</string>
+    <string name="accessibility_unpin">Unpin</string>
+    <string name="accessibility_detail_title">Service details</string>
+    <string name="accessibility_detail_class">Service class</string>
+    <string name="accessibility_detail_capabilities">Capabilities</string>
+    <string name="accessibility_detail_scope">Scope</string>
+    <string name="accessibility_detail_feedback">Feedback</string>
+    <string name="accessibility_detail_events">Events</string>
+    <string name="accessibility_detail_flags">Flags</string>
+    <string name="accessibility_daemon_channel_name">Accessibility keep alive</string>
+    <string name="accessibility_daemon_notification_title">Accessibility keep alive running</string>
+    <string name="accessibility_daemon_notification_content">Selected accessibility services will be restored if disabled</string>
+    <string name="accessibility_daemon_restored_toast">Restored %1$s</string>
 
     <string name="permission_shizuku_title">Shizuku Permission</string>
     <string name="permission_shizuku_desc">Perform advanced system operations without Root</string>

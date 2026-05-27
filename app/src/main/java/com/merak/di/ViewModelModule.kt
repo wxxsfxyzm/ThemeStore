@@ -2,6 +2,7 @@ package com.merak.di
 
 import com.merak.ui.activity.MainViewModel
 import com.merak.ui.page.ThemeInstallViewModel
+import com.merak.ui.page.accessibility.AccessibilityViewModel
 import com.merak.ui.page.home.HomeViewModel
 import com.merak.ui.page.home.log.LogViewModel
 import com.merak.ui.page.settings.SettingsViewModel
@@ -18,4 +19,5 @@ val viewModelModule = module {
     viewModelOf(::SettingsViewModel)
     viewModelOf(::AppearanceViewModel)
     viewModelOf(::ThemeInstallViewModel)
+    viewModelOf(::AccessibilityViewModel)
 }

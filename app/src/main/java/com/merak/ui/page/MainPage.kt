@@ -36,6 +36,7 @@ import com.merak.ui.Route
 import com.merak.ui.icons.AppIcons
 import com.merak.ui.library.FloatingBottomBar
 import com.merak.ui.library.FloatingBottomBarItem
+import com.merak.ui.page.accessibility.AccessibilityPage
 import com.merak.ui.page.home.HomePage
 import com.merak.ui.page.settings.SettingsPage
 import com.merak.ui.theme.rememberMiuixBlurBackdrop
@@ -70,11 +71,14 @@ fun MainPage(
     useFloatingBottomBar: Boolean
 ) {
     val homeLabel = stringResource(R.string.title_home)
+    val accessibilityLabel = stringResource(R.string.title_accessibility_manager)
     val settingsLabel = stringResource(R.string.title_settings)
     val homeIcon = ImageVector.vectorResource(R.drawable.magic_wand_color)
-    val items = remember(homeLabel, settingsLabel, homeIcon) {
+    val accessibilityIcon = ImageVector.vectorResource(R.drawable.ic_accessibility)
+    val items = remember(homeLabel, accessibilityLabel, settingsLabel, homeIcon, accessibilityIcon) {
         listOf(
             NavigationItem(homeLabel, homeIcon),
+            NavigationItem(accessibilityLabel, accessibilityIcon),
             NavigationItem(settingsLabel, AppIcons.Settings)
         )
     }
@@ -401,7 +405,12 @@ private fun MainPagerContent(
                 outerPadding = outerPadding
             )
 
-            1 -> SettingsPage(
+            1 -> AccessibilityPage(
+                enableBlur = enablePageBlur,
+                outerPadding = outerPadding
+            )
+
+            2 -> SettingsPage(
                 onNavigateToAppearance = { navigator.push(Route.Appearance) },
                 onNavigateToAbout = { navigator.push(Route.About) },
                 enableBlur = enablePageBlur,

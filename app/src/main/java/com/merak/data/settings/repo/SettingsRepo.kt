@@ -22,4 +22,8 @@ interface SettingsRepo {
     suspend fun setSeedColor(colorInt: Int)
 
     suspend fun setKeepAliveEnabled(enabled: Boolean)
+    suspend fun setAccessibilityPinnedServices(serviceIds: List<String>)
+    suspend fun setAccessibilityDaemonServices(serviceIds: Set<String>)
+    suspend fun setAccessibilityDaemonBootEnabled(enabled: Boolean)
+    suspend fun setAccessibilityDaemonToastEnabled(enabled: Boolean)
 }

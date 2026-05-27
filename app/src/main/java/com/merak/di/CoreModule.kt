@@ -1,6 +1,7 @@
 package com.merak.di
 
 import com.merak.core.installer.ThemeInstallerManager
+import com.merak.core.accessibility.AccessibilityServiceManager
 import com.merak.core.os.shizuku.AutoAccessibilityManager
 import com.merak.core.os.shizuku.PrivilegedManager
 import com.merak.core.os.shizuku.util.ShizukuHook
@@ -17,6 +18,7 @@ val coreModule = module {
     }
 
     singleOf(::ThemeInstallerManager)
+    singleOf(::AccessibilityServiceManager)
 
     singleOf(::PrivilegedManager)
 

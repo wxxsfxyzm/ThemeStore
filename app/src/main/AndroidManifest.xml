@@ -145,6 +145,26 @@
         </service>
 
         <service
+            android:name="com.merak.service.AccessibilityDaemonService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keep selected accessibility services enabled" />
+        </service>
+
+        <receiver
+            android:name="com.merak.receiver.AccessibilityDaemonBootReceiver"
+            android:directBootAware="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <service
             android:name="com.merak.service.KeepAliveTileService"
             android:exported="true"
             android:icon="@drawable/ic_notification"

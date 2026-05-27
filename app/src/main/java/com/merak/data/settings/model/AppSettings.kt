@@ -22,4 +22,8 @@ data class AppSettings(
     // Settings
     val isKeepAliveEnabled: Boolean = false,
     val isOptimizationModeEnabled: Boolean = false,
+    val accessibilityPinnedServices: List<String> = emptyList(),
+    val accessibilityDaemonServices: Set<String> = emptySet(),
+    val isAccessibilityDaemonBootEnabled: Boolean = true,
+    val isAccessibilityDaemonToastEnabled: Boolean = true,
 )

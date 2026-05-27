@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">ThemeStore</string>
     <string name="title_home">首頁</string>
+    <string name="title_accessibility_manager">無障礙</string>
     <string name="title_settings">設定</string>
     <string name="home_install_title">主題安裝</string>
     <string name="home_install_summary">安裝本地/線上主題包</string>
@@ -137,4 +138,31 @@
     <string name="keep_alive_notification_content">安裝:%1$d次 | 攔截:%2$d次</string>
     <string name="keep_alive_notification_accessibility_disabled">無障礙已關閉</string>
     <string name="keep_alive_notification_permission_required">請先授予通知權限才能開啟常駐通知保活</string>
+
+    <!-- 無障礙管理 -->
+    <string name="accessibility_permission_required">请先授予权限</string>
+    <string name="accessibility_operation_failed">操作失敗</string>
+    <string name="accessibility_empty">未找到無障礙服務</string>
+    <string name="accessibility_no_description">該服務沒有描述</string>
+    <string name="accessibility_service_list_title">服務列表</string>
+    <string name="accessibility_daemon_settings_title">保活設定</string>
+    <string name="accessibility_daemon_boot">開機啟動保活</string>
+    <string name="accessibility_daemon_boot_summary">裝置啟動後恢復已選擇的無障礙服務</string>
+    <string name="accessibility_daemon_toast">顯示保活提示</string>
+    <string name="accessibility_daemon_toast_summary">恢復服務時顯示短提示</string>
+    <string name="accessibility_daemon_enabled">保活已開</string>
+    <string name="accessibility_daemon_disabled">保活未開</string>
+    <string name="accessibility_pin">置頂</string>
+    <string name="accessibility_unpin">取消置頂</string>
+    <string name="accessibility_detail_title">服務詳細資訊</string>
+    <string name="accessibility_detail_class">服務類名</string>
+    <string name="accessibility_detail_capabilities">特殊能力</string>
+    <string name="accessibility_detail_scope">生效範圍</string>
+    <string name="accessibility_detail_feedback">反饋方式</string>
+    <string name="accessibility_detail_events">捕獲事件類型</string>
+    <string name="accessibility_detail_flags">特殊標誌</string>
+    <string name="accessibility_daemon_channel_name">無障礙保活</string>
+    <string name="accessibility_daemon_notification_title">無障礙保活運行中</string>
+    <string name="accessibility_daemon_notification_content">已選擇的無障礙服務被關閉時會自動恢復</string>
+    <string name="accessibility_daemon_restored_toast">已保活 %1$s</string>
 </resources>

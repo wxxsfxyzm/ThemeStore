@@ -18,6 +18,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.merak.ui.components.MiuixNavigationItemWidget
+import com.merak.ui.components.MiuixSwitchWidget
 import com.merak.ui.theme.getMiuixAppBarColor
 import com.merak.ui.theme.rememberMiuixBlurBackdrop
 import com.merak.ui.theme.tsMiuixBlurEffect
@@ -34,7 +35,6 @@ import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 import top.yukonga.miuix.kmp.preference.ArrowPreference as SuperArrow
-import top.yukonga.miuix.kmp.preference.SwitchPreference as SuperSwitch
 
 @Composable
 fun SettingsPage(
@@ -111,9 +111,9 @@ fun SettingsPage(
                         .padding(horizontal = 12.dp)
                         .padding(bottom = 6.dp)
                 ) {
-                    SuperSwitch(
+                    MiuixSwitchWidget(
                         title = stringResource(R.string.keep_alive_title),
-                        summary = stringResource(R.string.keep_alive_summary),
+                        description = stringResource(R.string.keep_alive_summary),
                         checked = settings.isKeepAliveEnabled,
                         onCheckedChange = { checked ->
                             if (checked) {
